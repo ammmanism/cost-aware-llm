@@ -1,19 +1,9 @@
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
+from fastapi import Response
 
-REQUEST_COUNT = Counter(
-    "llm_gateway_requests_total",
-    "Total LLM requests",
-    ["provider", "model", "status"]
-)
+request_counter = Counter('llm_gateway_requests_total', 'Total requests')
+failure_counter = Counter('llm_gateway_failures_total', 'Total failures')
+latency_histogram = Histogram('llm_gateway_request_duration_ms', 'Request latency in ms')
 
-LATENCY = Histogram(
-    "llm_gateway_latency_seconds",
-    "LLM request latency",
-    ["provider", "model"]
-)
-
-CACHE_HIT = Counter(
-    "llm_gateway_cache_hits_total",
-    "Total cache hits",
-    ["type"]
-)
+def metrics_endpoint():
+    return Response(content=generate_latest(REGISTRY), media_type="text/plain")
