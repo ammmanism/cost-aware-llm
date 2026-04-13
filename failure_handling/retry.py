@@ -20,4 +20,23 @@ async def retry_with_backoff(
                 raise e
             logger.warning(f"Retry {i+1} failing with error: {e}. Retrying in {delay}s...")
             await asyncio.sleep(delay)
-            delay *= factor
+            delay *= factor# Retry logic 1
+# Retry logic 2
+# Retry logic 3
+# Retry logic 4
+# Retry logic 5
+# Retry logic 6
+# Retry logic 7
+# Retry logic 8
+# Retry logic 9
+# Retry logic 10
+# Retry logic 11
+# Retry logic 12
+# Retry logic 13
+# Retry logic 14
+# Retry logic 15
+# Retry logic 16
+# Retry logic 17
+# Retry logic 18
+# Retry logic 19
+# Retry logic 20

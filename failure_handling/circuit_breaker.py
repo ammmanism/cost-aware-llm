@@ -40,4 +40,23 @@ class CircuitBreaker:
             return result
         except Exception as e:
             self.record_failure()
-            raise e
+            raise e# CB State 21
+# CB State 22
+# CB State 23
+# CB State 24
+# CB State 25
+# CB State 26
+# CB State 27
+# CB State 28
+# CB State 29
+# CB State 30
+# CB State 31
+# CB State 32
+# CB State 33
+# CB State 34
+# CB State 35
+# CB State 36
+# CB State 37
+# CB State 38
+# CB State 39
+# CB State 40
