@@ -57,3 +57,4 @@ class CircuitBreaker:
 # CB State 35
 # CB State 36
 # CB State 37
+# CB State 38
