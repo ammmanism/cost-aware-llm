@@ -40,4 +40,4 @@ class CircuitBreaker:
             return result
         except Exception as e:
             self.record_failure()
-            raise e
+            raise e# CB State 21
