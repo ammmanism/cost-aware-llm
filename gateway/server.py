@@ -13,14 +13,22 @@ from caching.cache_manager import CacheManager
 from multi_tenant.quota_manager import QuotaManager
 from multi_tenant.budget_enforcer import BudgetEnforcer
 from observability.metrics.prometheus import (
-    request_counter, failure_counter, latency_histogram
+    request_counter, failure_counter, latency_histogram, metrics_endpoint
 )
 from observability.tracing.open_telemetry import trace
+from observability.logging_middleware import StructuredLoggingMiddleware
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LLM Gateway")
+
+# Add structured logging middleware
+app.add_middleware(StructuredLoggingMiddleware)
 
 # Initialize components
 provider = OpenAIProvider()
@@ -35,6 +43,7 @@ class GenerateRequest(BaseModel):
     prompt: str
     tenant_id: Optional[str] = "default"
     use_cache: Optional[bool] = True
+    prefer_latency: Optional[bool] = False  # Flag to switch routing strategy
 
 class GenerateResponse(BaseModel):
     model: str
@@ -42,14 +51,25 @@ class GenerateResponse(BaseModel):
     provider: str
     latency_ms: float
 
+@app.get("/health")
+async def health_check():
+    """Kubernetes-style health endpoint."""
+    return {"status": "healthy"}
+
+@app.get("/metrics")
+async def get_metrics():
+    """Prometheus metrics endpoint."""
+    return metrics_endpoint()
+
 @app.post("/generate", response_model=GenerateResponse)
 @trace
 async def generate(request: GenerateRequest, req: Request):
-    start_time = time.time()
+    start_time = time.perf_counter()
     request_counter.inc()
 
     # Multi-tenant checks
-    if not quota_manager.check_quota(request.tenant_id, tokens=len(request.prompt.split())):
+    estimated_input_tokens = len(request.prompt.split())
+    if not quota_manager.check_quota(request.tenant_id, tokens=estimated_input_tokens):
         failure_counter.inc()
         raise HTTPException(status_code=429, detail="Quota exceeded")
     if not budget_enforcer.check_budget(request.tenant_id, estimated_cost=0.01):
@@ -61,8 +81,9 @@ async def generate(request: GenerateRequest, req: Request):
     if request.use_cache:
         cached = await cache_manager.get(cache_key)
         if cached:
-            latency = (time.time() - start_time) * 1000
+            latency = (time.perf_counter() - start_time) * 1000
             latency_histogram.observe(latency)
+            logger.info(f"Cache hit for tenant {request.tenant_id}")
             return GenerateResponse(
                 model=cached["model"],
                 output=cached["output"],
@@ -70,8 +91,14 @@ async def generate(request: GenerateRequest, req: Request):
                 latency_ms=latency
             )
 
-    # Router selection (cost-aware primary, fallback list)
-    models = cost_router.select_models({"prompt": request.prompt})
+    # Router selection based on preference
+    if request.prefer_latency:
+        models = latency_router.select_models({"prompt": request.prompt})
+        logger.debug("Using latency-aware routing")
+    else:
+        models = cost_router.select_models({"prompt": request.prompt})
+        logger.debug("Using cost-aware routing")
+
     fallback_models = fallback_router.get_fallback_chain(models)
 
     # Try providers in fallback order
@@ -87,9 +114,12 @@ async def generate(request: GenerateRequest, req: Request):
                     "provider": result["provider"]
                 })
                 # Update quota
-                quota_manager.consume(request.tenant_id, tokens=len(result["output"].split()))
-                latency = (time.time() - start_time) * 1000
+                output_tokens = len(result["output"].split())
+                quota_manager.consume(request.tenant_id, tokens=output_tokens)
+                budget_enforcer.add_cost(request.tenant_id, cost=0.01)  # Placeholder
+                latency = (time.perf_counter() - start_time) * 1000
                 latency_histogram.observe(latency)
+                logger.info(f"Success with model {model_name} for tenant {request.tenant_id}")
                 return GenerateResponse(
                     model=result["model"],
                     output=result["output"],
@@ -97,11 +127,12 @@ async def generate(request: GenerateRequest, req: Request):
                     latency_ms=latency
                 )
         except Exception as e:
-            logger.warning(f"Provider {model_name} failed: {e}")
+            logger.warning(f"Provider {model_name} failed: {e}", exc_info=True)
             last_error = e
             continue
 
     failure_counter.inc()
+    logger.error(f"All providers failed for tenant {request.tenant_id}: {last_error}")
     raise HTTPException(status_code=503, detail=f"All providers failed: {last_error}")
 
 @app.exception_handler(Exception)
@@ -110,5 +141,5 @@ async def global_exception_handler(request: Request, exc: Exception):
     failure_counter.inc()
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"}
+        content={"detail": "Internal server error", "request_id": getattr(request.state, "request_id", None)}
     )
