@@ -42,3 +42,4 @@ class CircuitBreaker:
             self.record_failure()
             raise e# CB State 21
 # CB State 22
+# CB State 23
