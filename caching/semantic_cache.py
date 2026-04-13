@@ -9,3 +9,4 @@ class SemanticCache:
     def set(self, prompt: str, response: Any):
         pass
 # Perf Optimization 1
+# Perf Optimization 2
