@@ -65,4 +65,4 @@ async def generate(request: GenerateRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    return {"status": "healthy"}# Logic 16
