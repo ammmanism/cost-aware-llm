@@ -1,42 +1,29 @@
 import asyncio
-from typing import Callable, Any, Type
+import functools
 import logging
+from typing import Callable, Any
 
 logger = logging.getLogger(__name__)
 
-async def retry_with_backoff(
-    func: Callable,
-    retries: int = 3,
-    initial_delay: float = 1.0,
-    factor: float = 2.0,
-    exceptions: Type[Exception] = Exception
-) -> Any:
-    delay = initial_delay
-    for i in range(retries):
-        try:
-            return await func()
-        except exceptions as e:
-            if i == retries - 1:
-                raise e
-            logger.warning(f"Retry {i+1} failing with error: {e}. Retrying in {delay}s...")
-            await asyncio.sleep(delay)
-            delay *= factor# Retry logic 1
-# Retry logic 2
-# Retry logic 3
-# Retry logic 4
-# Retry logic 5
-# Retry logic 6
-# Retry logic 7
-# Retry logic 8
-# Retry logic 9
-# Retry logic 10
-# Retry logic 11
-# Retry logic 12
-# Retry logic 13
-# Retry logic 14
-# Retry logic 15
-# Retry logic 16
-# Retry logic 17
-# Retry logic 18
-# Retry logic 19
-# Retry logic 20
+def retry(max_retries: int = 3, backoff_factor: float = 0.5, exceptions: tuple = (Exception,)):
+    """
+    Async retry decorator with exponential backoff.
+    """
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs) -> Any:
+            last_exception = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    if attempt < max_retries:
+                        wait_time = backoff_factor * (2 ** attempt)
+                        logger.warning(f"Retry {attempt+1}/{max_retries} after error: {e}. Waiting {wait_time}s")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"Max retries ({max_retries}) exceeded: {e}")
+            raise last_exception
+        return wrapper
+    return decorator
