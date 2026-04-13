@@ -43,3 +43,4 @@ class CircuitBreaker:
             raise e# CB State 21
 # CB State 22
 # CB State 23
+# CB State 24
