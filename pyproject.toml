@@ -1,0 +1,33 @@
+[project]
+name = "llm-gateway-platform"
+version = "0.1.0"
+description = "Production-grade LLM Gateway with routing, caching, and resiliency."
+authors = [{ name = "Engineer", email = "engineer@example.com" }]
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "httpx>=0.24.0",
+    "prometheus-client>=0.17.0",
+    "opentelemetry-api>=1.15.0",
+    "opentelemetry-sdk>=1.15.0",
+    "opentelemetry-instrumentation-fastapi>=0.36b0",
+    "pyyaml>=6.0.0",
+    "redis>=4.6.0",
+    "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "locust>=2.15.0",
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,13 @@
+models:
+  - id: gpt-3.5-turbo
+    provider: openai
+    cost_per_1k_tokens: 0.0015
+    latency_score: 0.2
+  - id: gpt-4
+    provider: openai
+    cost_per_1k_tokens: 0.03
+    latency_score: 0.8
+  - id: claude-2
+    provider: anthropic
+    cost_per_1k_tokens: 0.008
+    latency_score: 0.5

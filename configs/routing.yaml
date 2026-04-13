@@ -1,0 +1,8 @@
+default_strategy: fallback
+strategies:
+  cost_aware:
+    priority: cost
+  latency_aware:
+    priority: latency
+  fallback:
+    chain: [gpt-4, claude-2, gpt-3.5-turbo]

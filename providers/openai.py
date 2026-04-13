@@ -1,28 +1,23 @@
 import os
-from typing import Dict, Any
+from typing import Any, Dict
+from providers.base import LLMProvider
 
-from .base import BaseProvider
-
-
-class OpenAIProvider(BaseProvider):
-    def __init__(self, default_model: str = "gpt-4-turbo"):
+class OpenAIProvider(LLMProvider):
+    def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.default_model = default_model
 
     async def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
-        model = kwargs.get("model", self.default_model)
-
-        if not self.api_key:
+        if not self.api_key or self.api_key == "sk-placeholder":
+            # Mock response for testing/demo
             return {
-                "provider": "openai",
-                "model": model,
-                "output": f"[MOCK RESPONSE] {prompt}",
-                "status": "success",
+                "text": f"OpenAI Mock: Received '{prompt}'",
+                "usage": {"total_tokens": 10},
+                "model": kwargs.get("model", "gpt-3.5-turbo")
             }
+        
+        # Integration with actual OpenAI client would go here
+        return {"text": "Actual OpenAI response logic needed here", "status": "missing_client"}
 
-        return {
-            "provider": "openai",
-            "model": model,
-            "output": f"[REAL CALL PLACEHOLDER] {prompt}",
-            "status": "success",
-        }
+    @property
+    def name(self) -> str:
+        return "openai"

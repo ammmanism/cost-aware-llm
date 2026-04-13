@@ -1,0 +1,8 @@
+enabled: true
+strategies:
+  exact:
+    ttl: 3600
+    storage: memory
+  semantic:
+    similarity_threshold: 0.95
+    storage: redis
