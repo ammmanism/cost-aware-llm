@@ -1,13 +1,23 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Dict, Any
 
-class LLMProvider(ABC):
-    @abstractmethod
-    async def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
-        """Generate a response from the LLM provider."""
-        pass
+class BaseProvider(ABC):
+    """Abstract base class for LLM providers."""
 
-    @property
     @abstractmethod
-    def name(self) -> str:
+    async def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        """
+        Generate a response from the LLM.
+
+        Args:
+            prompt: Input text prompt.
+            **kwargs: Additional provider-specific arguments (e.g., model, temperature).
+
+        Returns:
+            Dictionary containing at least:
+                - provider: str
+                - model: str
+                - output: str
+                - status: str ("success" or "error")
+        """
         pass
