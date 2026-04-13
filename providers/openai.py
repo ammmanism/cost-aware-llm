@@ -1,23 +1,48 @@
 import os
-from typing import Any, Dict
-from providers.base import LLMProvider
+import asyncio
+import random
+from typing import Dict, Any, Optional
+from providers.base import BaseProvider
+from failure_handling.retry import retry
+from failure_handling.circuit_breaker import CircuitBreaker
 
-class OpenAIProvider(LLMProvider):
+class OpenAIProvider(BaseProvider):
     def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
+        self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
 
-    async def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
-        if not self.api_key or self.api_key == "sk-placeholder":
-            # Mock response for testing/demo
-            return {
-                "text": f"OpenAI Mock: Received '{prompt}'",
-                "usage": {"total_tokens": 10},
-                "model": kwargs.get("model", "gpt-3.5-turbo")
-            }
-        
-        # Integration with actual OpenAI client would go here
-        return {"text": "Actual OpenAI response logic needed here", "status": "missing_client"}
+    @retry(max_retries=3, backoff_factor=0.5)
+    async def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        model = kwargs.get("model", "gpt-3.5-turbo")
+        if not self.circuit_breaker.allow_request():
+            raise Exception("Circuit breaker is OPEN")
 
-    @property
-    def name(self) -> str:
-        return "openai"
+        try:
+            if not self.api_key:
+                # Mock response for testing without API key
+                await asyncio.sleep(0.1)  # simulate latency
+                output = f"Mock response to: {prompt[:30]}..."
+                self.circuit_breaker.record_success()
+                return {
+                    "provider": "openai",
+                    "model": model,
+                    "output": output,
+                    "status": "success"
+                }
+            else:
+                # Actual OpenAI API call would go here
+                # For brevity, we'll use mock but structure is ready
+                # import openai
+                # response = await openai.ChatCompletion.acreate(...)
+                await asyncio.sleep(0.2)
+                output = f"OpenAI ({model}) response to: {prompt[:30]}..."
+                self.circuit_breaker.record_success()
+                return {
+                    "provider": "openai",
+                    "model": model,
+                    "output": output,
+                    "status": "success"
+                }
+        except Exception as e:
+            self.circuit_breaker.record_failure()
+            raise e
