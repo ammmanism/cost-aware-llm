@@ -1,22 +1,35 @@
 import time
-from typing import Dict, Optional, Any
+import asyncio
+from typing import Any, Dict, Optional
 
 class ExactCache:
-    def __init__(self, ttl: int = 3600):
-        self.cache: Dict[str, Dict[str, Any]] = {}
-        self.ttl = ttl
+    """In-memory cache with TTL support."""
 
-    def get(self, key: str) -> Optional[Any]:
-        if key in self.cache:
-            entry = self.cache[key]
-            if time.time() < entry["expires_at"]:
-                return entry["value"]
-            else:
-                del self.cache[key]
-        return None
+    def __init__(self):
+        self._cache: Dict[str, tuple[Any, float]] = {}
+        self._lock = asyncio.Lock()
 
-    def set(self, key: str, value: Any):
-        self.cache[key] = {
-            "value": value,
-            "expires_at": time.time() + self.ttl
-        }
+    async def get(self, key: str) -> Optional[Any]:
+        async with self._lock:
+            entry = self._cache.get(key)
+            if entry is None:
+                return None
+            value, expiry = entry
+            if expiry and time.time() > expiry:
+                del self._cache[key]
+                return None
+            return value
+
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None):
+        async with self._lock:
+            expiry = time.time() + ttl if ttl else None
+            self._cache[key] = (value, expiry)
+
+    async def delete(self, key: str):
+        async with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+
+    async def clear(self):
+        async with self._lock:
+            self._cache.clear()
