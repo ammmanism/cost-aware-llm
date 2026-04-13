@@ -1,20 +1,17 @@
-from typing import Optional, Any
+from typing import Any, Optional
 from caching.exact_cache import ExactCache
-from caching.semantic_cache import SemanticCache
 
 class CacheManager:
-    def __init__(self):
-        self.exact = ExactCache()
-        self.semantic = SemanticCache()
+    def __init__(self, default_ttl: int = 3600):
+        self.cache = ExactCache()
+        self.default_ttl = default_ttl
 
-    def get(self, prompt: str) -> Optional[Any]:
-        # Try exact first
-        result = self.exact.get(prompt)
-        if result:
-            return result
-        # then semantic
-        return self.semantic.get(prompt)
+    async def get(self, key: str) -> Optional[Any]:
+        return await self.cache.get(key)
 
-    def set(self, prompt: str, response: Any):
-        self.exact.set(prompt, response)
-        self.semantic.set(prompt, response)
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None):
+        ttl = ttl if ttl is not None else self.default_ttl
+        await self.cache.set(key, value, ttl)
+
+    async def invalidate(self, key: str):
+        await self.cache.delete(key)
