@@ -1,82 +1,114 @@
-import yaml
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+import logging
+import time
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 
 from providers.openai import OpenAIProvider
-from providers.anthropic import AnthropicProvider
 from gateway.routers.cost_aware import CostAwareRouter
+from gateway.routers.latency_aware import LatencyAwareRouter
 from gateway.routers.fallback import FallbackRouter
-from failure_handling.circuit_breaker import CircuitBreaker
 from caching.cache_manager import CacheManager
-from observability.metrics.prometheus import REQUEST_COUNT
+from multi_tenant.quota_manager import QuotaManager
+from multi_tenant.budget_enforcer import BudgetEnforcer
+from observability.metrics.prometheus import (
+    request_counter, failure_counter, latency_histogram
+)
+from observability.tracing.open_telemetry import trace
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LLM Gateway")
 
-# Load configs (simplified)
-with open("configs/models.yaml", "r") as f:
-    models_config = yaml.safe_load(f)["models"]
-
 # Initialize components
-cache = CacheManager()
-openai = OpenAIProvider()
-anthropic = AnthropicProvider()
-cb = CircuitBreaker()
-
-routers = {
-    "cost_aware": CostAwareRouter(models_config),
-    "fallback": FallbackRouter(["gpt-4", "claude-2"])
-}
+provider = OpenAIProvider()
+cost_router = CostAwareRouter()
+latency_router = LatencyAwareRouter()
+fallback_router = FallbackRouter()
+cache_manager = CacheManager()
+quota_manager = QuotaManager()
+budget_enforcer = BudgetEnforcer()
 
 class GenerateRequest(BaseModel):
     prompt: str
-    router: str = "fallback"
-    tenant_id: str = "default"
+    tenant_id: Optional[str] = "default"
+    use_cache: Optional[bool] = True
 
-@app.post("/generate")
-async def generate(request: GenerateRequest):
-    # 1. Caching
-    cached_response = cache.get(request.prompt)
-    if cached_response:
-        return {"status": "hit", "response": cached_response}
+class GenerateResponse(BaseModel):
+    model: str
+    output: str
+    provider: str
+    latency_ms: float
 
-    # 2. Routing
-    router = routers.get(request.router, routers["fallback"])
-    model_id = router.route({"prompt": request.prompt})
+@app.post("/generate", response_model=GenerateResponse)
+@trace
+async def generate(request: GenerateRequest, req: Request):
+    start_time = time.time()
+    request_counter.inc()
 
-    # 3. Execution with Resiliency
-    try:
-        # Simplified provider selection logic
-        provider = openai if "gpt" in model_id else anthropic
-        
-        async def call_provider():
-            return await provider.generate(request.prompt, model=model_id)
+    # Multi-tenant checks
+    if not quota_manager.check_quota(request.tenant_id, tokens=len(request.prompt.split())):
+        failure_counter.inc()
+        raise HTTPException(status_code=429, detail="Quota exceeded")
+    if not budget_enforcer.check_budget(request.tenant_id, estimated_cost=0.01):
+        failure_counter.inc()
+        raise HTTPException(status_code=402, detail="Budget exceeded")
 
-        response = await cb.call(call_provider)
-        
-        # 4. Cache and Return
-        cache.set(request.prompt, response)
-        REQUEST_COUNT.labels(provider=provider.name, model=model_id, status="success").inc()
-        return {"status": "miss", "response": response}
+    # Check cache
+    cache_key = f"{request.tenant_id}:{request.prompt}"
+    if request.use_cache:
+        cached = await cache_manager.get(cache_key)
+        if cached:
+            latency = (time.time() - start_time) * 1000
+            latency_histogram.observe(latency)
+            return GenerateResponse(
+                model=cached["model"],
+                output=cached["output"],
+                provider=cached["provider"],
+                latency_ms=latency
+            )
 
-    except Exception as e:
-        REQUEST_COUNT.labels(provider="unknown", model=model_id, status="failure").inc()
-        raise HTTPException(status_code=500, detail=str(e))
+    # Router selection (cost-aware primary, fallback list)
+    models = cost_router.select_models({"prompt": request.prompt})
+    fallback_models = fallback_router.get_fallback_chain(models)
 
-@app.get("/health")
-async def health():
-    return {"status": "healthy"}# Logic 16
-# Logic 17
-# Logic 18
-# Logic 19
-# Logic 20
-# Logic 21
-# Logic 22
-# Logic 23
-# Logic 24
-# Logic 25
-# Logic 26
-# Logic 27
-# Logic 28
-# Logic 29
-# Logic 30
+    # Try providers in fallback order
+    last_error = None
+    for model_name in fallback_models:
+        try:
+            result = await provider.generate(prompt=request.prompt, model=model_name)
+            if result["status"] == "success":
+                # Cache result
+                await cache_manager.set(cache_key, {
+                    "model": result["model"],
+                    "output": result["output"],
+                    "provider": result["provider"]
+                })
+                # Update quota
+                quota_manager.consume(request.tenant_id, tokens=len(result["output"].split()))
+                latency = (time.time() - start_time) * 1000
+                latency_histogram.observe(latency)
+                return GenerateResponse(
+                    model=result["model"],
+                    output=result["output"],
+                    provider=result["provider"],
+                    latency_ms=latency
+                )
+        except Exception as e:
+            logger.warning(f"Provider {model_name} failed: {e}")
+            last_error = e
+            continue
+
+    failure_counter.inc()
+    raise HTTPException(status_code=503, detail=f"All providers failed: {last_error}")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error: {exc}", exc_info=True)
+    failure_counter.inc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
