@@ -11,3 +11,4 @@ class SemanticCache:
 # Perf Optimization 1
 # Perf Optimization 2
 # Perf Optimization 3
+# Perf Optimization 4
