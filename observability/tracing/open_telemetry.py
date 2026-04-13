@@ -1,6 +1,19 @@
-from opentelemetry import trace
+import functools
+import time
+import logging
 
-tracer = trace.get_tracer("llm-gateway")
+logger = logging.getLogger(__name__)
 
-def start_span(name: str):
-    return tracer.start_as_current_span(name)
+# Stub for OpenTelemetry tracing
+def trace(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        start = time.time()
+        logger.debug(f"Trace start: {func.__name__}")
+        try:
+            result = await func(*args, **kwargs)
+            return result
+        finally:
+            duration = time.time() - start
+            logger.debug(f"Trace end: {func.__name__} took {duration:.3f}s")
+    return wrapper
