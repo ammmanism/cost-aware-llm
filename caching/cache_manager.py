@@ -43,26 +43,36 @@ class CacheManager:
             self._redis_connected = True
 
     async def get(self, key: str, prompt: Optional[str] = None, tenant_id: str = "default") -> Optional[Any]:
-        """
-        Get from cache. Checks exact match first, then semantic.
-        """
+        """Get from cache with Dogpile/Stampede protection."""
+        if not hasattr(self, "_locks"):
+            import asyncio
+            self._locks = {}
+            
         await self._ensure_redis_connected()
 
-        # Try exact match
+        # Try exact match first
         exact_value = await self.exact_cache.get(key)
-        if exact_value:
-            logger.debug("Exact cache hit")
-            return exact_value
+        if exact_value: return exact_value
 
-        # Try semantic cache if enabled and prompt provided
-        if self.semantic_cache and prompt:
-            semantic_value = await self.semantic_cache.get(prompt, tenant_id)
-            if semantic_value:
-                logger.debug("Semantic cache hit")
-                # Populate exact cache for future exact hits
-                await self.exact_cache.set(key, semantic_value, self.default_ttl)
-                return semantic_value
+        # Use an asyncio lock to prevent 'Cache Stampede' on simultaneous identical requests
+        import asyncio
+        if key not in self._locks: self._locks[key] = asyncio.Lock()
+        
+        async with self._locks[key]:
+            # Double check exact cache once acquired
+            exact_value = await self.exact_cache.get(key)
+            if exact_value: return exact_value
 
+            if self.semantic_cache and prompt:
+                semantic_value = await self.semantic_cache.get(prompt, tenant_id)
+                if semantic_value:
+                    logger.debug("Semantic cache hit (recovered in locked region)")
+                    await self.exact_cache.set(key, semantic_value, self.default_ttl)
+                    return semantic_value
+
+        # Clean lock dict occasionally (simplified)
+        if len(self._locks) > 10000: self._locks.clear()
+        
         return None
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None, prompt: Optional[str] = None, tenant_id: str = "default"):
