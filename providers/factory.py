@@ -2,6 +2,7 @@ from providers.openai import OpenAIProvider
 from providers.anthropic import AnthropicProvider
 from providers.gemini import GeminiProvider
 from providers.together import TogetherProvider
+from providers.groq import GroqProvider
 
 class ProviderFactory:
     """Factory for LLM providers."""
@@ -9,7 +10,8 @@ class ProviderFactory:
         "openai": OpenAIProvider(),
         "anthropic": AnthropicProvider(),
         "google": GeminiProvider(),
-        "together": TogetherProvider()
+        "together": TogetherProvider(),
+        "groq": GroqProvider()
     }
 
     @classmethod
