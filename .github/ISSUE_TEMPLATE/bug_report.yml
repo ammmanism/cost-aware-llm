@@ -1,0 +1,43 @@
+name: Bug Report
+description: Create a bug report to help us improve the LLM Gateway
+title: "[BUG] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please check if an issue already exists before submitting.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: When I send a stream generation request using the Anthropic provider under high load...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the problem?
+      placeholder: |
+        1. Start the gateway using `docker-compose up`
+        2. Set ChaosController to 50% failure rate
+        3. Send concurrent requests with `ab -n 1000 -c 100`...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs or OTel Traces
+      description: Paste relevant FastApi logs, Prometheus metrics, or Jaeger traces here.
+      render: shell
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Deployment Environment
+      options:
+        - Docker Compose (Local)
+        - Kubernetes (Minikube/K3s)
+        - Kubernetes (EKS/GKE/AKS)
+        - Bare Metal
