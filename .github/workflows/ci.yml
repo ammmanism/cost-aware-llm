@@ -1,17 +1,85 @@
-name: CI
+name: Enterprise CI/CD Pipeline
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+env:
+  PYTHON_VERSION: "3.11"
 
 jobs:
-  test:
+  quality:
+    name: Code Quality & Security
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: Install dependencies & Linters
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff mypy bandit pytest pytest-asyncio
+        pip install -r requirements.txt
+        
+    - name: Lint with Ruff
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        ruff check . --select=E9,F63,F7,F82 --output-format=github
+        
+    - name: Type checking with mypy
+      run: |
+        mypy gateway/ caching/ multi_tenant/ --ignore-missing-imports
+        
+    - name: Security scan with Bandit
+      run: |
+        bandit -r gateway/ security/ multi_tenant/ -c pyproject.toml || true
+
+  test:
+    name: Integration & Unit Tests
+    needs: quality
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
     - name: Install dependencies
-      run: pip install -e ".[dev]"
-    - name: Run tests
-      run: pytest tests/
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio httpx
+        
+    - name: Run Test Suite
+      env:
+        REDIS_URL: redis://localhost:6379/0
+      run: |
+        pytest tests/ -v --junitxml=test-results.xml
+
+  build:
+    name: Docker Image Build Test
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Gateway Image
+      run: |
+        docker build -t llm-gateway:v${{ github.run_number }} -f infra/Dockerfile .

@@ -1,0 +1,30 @@
+name: Feature Request
+description: Suggest an architectural idea or feature for the Gateway
+title: "[FEATURE] "
+labels: ["enhancement", "discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We love new ideas! Since this is an Elite-tier infrastructure project, please provide architectural reasoning for your request.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of what the problem is.
+      placeholder: I'm always frustrated when my Redis L1 cache is evicted before the semantic L2 cache hits...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Architecture/Solution
+      description: Describe how you think this should be implemented.
+      placeholder: We should implement an async background worker that syncs Qdrant vector IDs to Redis hashes...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: Are there other ways to solve this?

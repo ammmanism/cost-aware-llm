@@ -2,6 +2,10 @@
 
 ### *The "Goat-Tier" Infrastructure for AI-Native Production Systems*
 
+[![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/ammmanism/llm-gateway-platform/ci.yml?branch=main&label=CI%2FCD&style=flat-square)](https://github.com/ammmanism/llm-gateway-platform/actions)
+[![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Checked with mypy](https://img.shields.io/badge/mypy-strict-blue)](http://mypy-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com/)
