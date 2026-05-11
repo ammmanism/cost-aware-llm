@@ -3,28 +3,38 @@ import asyncio
 import json
 import logging
 from typing import Dict, Any, AsyncIterator
-from providers.base import BaseProvider
-from failure_handling.retry import retry
-from failure_handling.circuit_breaker import CircuitBreaker
+from providers.abstract import BaseProvider
+from reliability.retry import retry
+from reliability.circuit_breaker import CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
 class OpenAIProvider(BaseProvider):
+    """
+    Provider implementation for OpenAI's Chat Completion API.
+    
+    Includes built-in retry logic and circuit breaking to ensure high 
+    reliability. Supports both standard and streaming generation modes.
+    """
     def __init__(self):
         self.api_key = os.environ.get("OPENAI_API_KEY")
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
         self.default_model = "gpt-3.5-turbo"
 
     @retry(max_retries=3, backoff_factor=0.5)
-    async def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
+    async def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Generate a complete response using OpenAI's API.
+        """
         model = kwargs.get("model", self.default_model)
         if not self.circuit_breaker.allow_request():
-            raise Exception("Circuit breaker is OPEN")
+            raise Exception("Circuit breaker is OPEN for OpenAI provider")
 
         try:
             if not self.api_key:
+                # Fallback to mock for testing if no API key present
                 await asyncio.sleep(0.1)
-                output = f"[OpenAI Mock] Response to: {prompt[:50]}..."
+                output = f"[OpenAI Mock] Automated response for: {prompt[:50]}..."
                 self.circuit_breaker.record_success()
                 return {
                     "provider": "openai",
@@ -65,19 +75,21 @@ class OpenAIProvider(BaseProvider):
             }
         except Exception as e:
             self.circuit_breaker.record_failure()
-            logger.error(f"OpenAI provider error: {e}")
+            logger.error(f"OpenAI completion failure: {e}")
             raise
 
-    async def stream_generate(self, prompt: str, **kwargs) -> AsyncIterator[str]:
+    async def stream_generate(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """
+        Stream a response using OpenAI's Server-Sent Events (SSE).
+        """
         model = kwargs.get("model", self.default_model)
         if not self.circuit_breaker.allow_request():
-            raise Exception("Circuit breaker is OPEN")
+            raise Exception("Circuit breaker is OPEN for OpenAI provider")
 
         try:
             if not self.api_key:
-                # Mock streaming
-                words = prompt.split()[:5] + ["...", "mock", "stream", "response"]
-                for word in words:
+                # Mock streaming for testing
+                for word in ["This", "is", "a", "mock", "OpenAI", "stream."]:
                     yield word + " "
                     await asyncio.sleep(0.05)
                 return
@@ -118,5 +130,5 @@ class OpenAIProvider(BaseProvider):
             self.circuit_breaker.record_success()
         except Exception as e:
             self.circuit_breaker.record_failure()
-            logger.error(f"OpenAI streaming error: {e}")
+            logger.error(f"OpenAI stream failure: {e}")
             raise
