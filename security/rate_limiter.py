@@ -8,8 +8,11 @@ logger = logging.getLogger(__name__)
 
 class RateLimiter:
     """
-    Elite Tier Rate Limiter utilizing Redis Lua Scripts for atomic 
-    Token Bucket operations ensuring zero race-conditions during burst traffic.
+    Implements a robust Rate Limiter using the Token Bucket algorithm.
+    
+    Provides atomic operations via Redis Lua scripts to handle high concurrency 
+    without race conditions. Falls back to an in-memory sliding window for 
+    environments without Redis.
     """
     
     # Lua script for atomic Token Bucket rate limiting
@@ -45,40 +48,52 @@ class RateLimiter:
         self._redis: Optional[redis.Redis] = None
         self._connected = False
         
-        # Fallback dictionary for local dev
+        # Fallback dictionary for local development/non-Redis environments
         self.requests: Dict[str, list] = {}
 
-    async def _ensure_redis_connected(self):
+    async def _ensure_redis_connected(self) -> None:
+        """Helper to establish a connection to Redis if available."""
         if self.redis_url and not self._connected:
             try:
                 self._redis = redis.from_url(self.redis_url, decode_responses=True)
                 await self._redis.ping()
                 self._connected = True
-                logger.info("Elite RateLimiter connected to Redis")
+                logger.info("RateLimiter successfully connected to Redis.")
             except Exception as e:
-                logger.error(f"Failed to connect Redis for RateLimiter: {e}")
+                logger.error(f"RateLimiter failed to connect to Redis: {e}")
                 self.redis_url = None
 
     async def is_allowed(self, tenant_id: str) -> Tuple[bool, int]:
+        """
+        Determine if a request from a specific tenant is allowed.
+
+        Args:
+            tenant_id: Unique identifier for the tenant.
+
+        Returns:
+            A tuple of (is_allowed, remaining_tokens).
+        """
         await self._ensure_redis_connected()
         now = time.time()
         
         if self._redis:
-            # Execute atomic Lua script
+            # Atomic execution via Lua script to prevent race conditions
             key = f"ratelimit:{tenant_id}"
             result = await self._redis.eval(
                 self.LUA_SCRIPT, 1, key, 
                 self.max_requests, self.refill_rate, now
             )
-            allow = bool(result[0])
-            remaining = int(result[1])
-            return allow, remaining
+            return bool(result[0]), int(result[1])
         else:
-            # Fallback to in-memory sliding window
+            # Simple in-memory sliding window fallback
             if tenant_id not in self.requests:
                 self.requests[tenant_id] = []
             
-            self.requests[tenant_id] = [req for req in self.requests[tenant_id] if now - req < self.window_seconds]
+            # Remove expired timestamps
+            self.requests[tenant_id] = [
+                req for req in self.requests[tenant_id] 
+                if now - req < self.window_seconds
+            ]
             
             if len(self.requests[tenant_id]) < self.max_requests:
                 self.requests[tenant_id].append(now)
