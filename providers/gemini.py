@@ -3,28 +3,38 @@ import asyncio
 import json
 import logging
 from typing import Dict, Any, AsyncIterator
-from providers.base import BaseProvider
-from failure_handling.retry import retry
-from failure_handling.circuit_breaker import CircuitBreaker
+from providers.abstract import BaseProvider
+from reliability.retry import retry
+from reliability.circuit_breaker import CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
 class GeminiProvider(BaseProvider):
+    """
+    Provider implementation for Google's Gemini API.
+    
+    Supports flash and pro models with optimized SSE streaming. 
+    Includes reliability wrappers for production stability.
+    """
     def __init__(self):
         self.api_key = os.environ.get("GEMINI_API_KEY")
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
         self.default_model = "gemini-1.5-flash"
 
     @retry(max_retries=2, backoff_factor=1.0)
-    async def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
+    async def generate(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Generate a complete response using Google's Gemini API.
+        """
         model = kwargs.get("model", self.default_model)
         if not self.circuit_breaker.allow_request():
-            raise Exception("Circuit breaker OPEN for Gemini")
+            raise Exception("Circuit breaker is OPEN for Gemini provider")
 
         try:
             if not self.api_key:
+                # Mock for local development
                 await asyncio.sleep(0.12)
-                output = f"[Gemini Mock] {prompt[:50]}..."
+                output = f"[Gemini Mock] Response for: {prompt[:50]}..."
                 self.circuit_breaker.record_success()
                 return {
                     "provider": "google",
@@ -58,18 +68,22 @@ class GeminiProvider(BaseProvider):
             }
         except Exception as e:
             self.circuit_breaker.record_failure()
-            logger.error(f"Gemini error: {e}")
+            logger.error(f"Gemini completion failure: {e}")
             raise
 
-    async def stream_generate(self, prompt: str, **kwargs) -> AsyncIterator[str]:
+    async def stream_generate(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """
+        Stream a response using Gemini's streamGenerateContent endpoint.
+        """
         model = kwargs.get("model", self.default_model)
         if not self.circuit_breaker.allow_request():
-            raise Exception("Circuit breaker OPEN for Gemini")
+            raise Exception("Circuit breaker is OPEN for Gemini provider")
 
         try:
             if not self.api_key:
-                for word in ["Mock", " ", "Gemini", " ", "stream"]:
-                    yield word
+                # Mock streaming for testing
+                for word in ["This", "is", "a", "mock", "Gemini", "stream."]:
+                    yield word + " "
                     await asyncio.sleep(0.05)
                 return
 
@@ -103,5 +117,5 @@ class GeminiProvider(BaseProvider):
             self.circuit_breaker.record_success()
         except Exception as e:
             self.circuit_breaker.record_failure()
-            logger.error(f"Gemini streaming error: {e}")
+            logger.error(f"Gemini stream failure: {e}")
             raise
