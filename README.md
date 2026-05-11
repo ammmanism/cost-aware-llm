@@ -2,7 +2,11 @@
 
 <div align="center">
 
+<<<<<<< HEAD
 ![Version](https://img.shields.io/badge/version-6.0.0-blue?style=for-the-badge)
+=======
+![Version](https://img.shields.io/badge/version-6.1.0-blue?style=for-the-badge)
+>>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
 ![Python](https://img.shields.io/badge/python-3.11+-blue?style=for-the-badge&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi)
 ![Redis](https://img.shields.io/badge/Redis-7.0+-DC382D?style=for-the-badge&logo=redis)
@@ -11,6 +15,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
 <!-- Viral Social Proof Badges -->
+<<<<<<< HEAD
 ![Response Time](https://img.shields.io/badge/Avg_Latency-<50ms-brightgreen?style=flat-square)
 ![Cost Savings](https://img.shields.io/badge/Cost_Reduction-72%25-blueviolet?style=flat-square)
 ![Uptime](https://img.shields.io/badge/Uptime-99.99%25-success?style=flat-square)
@@ -18,6 +23,15 @@
 <h3>🔥 Stop Burning Cash on OpenAI. The Elite Gateway for Cost‑Optimized AI Production.</h3>
 
 **LLM Infrastructure that pays for its own server costs — and then some.**
+=======
+![Response Time](https://img.shields.io/badge/Avg_Latency-<45ms-brightgreen?style=flat-square)
+![Cost Savings](https://img.shields.io/badge/Cost_Reduction-75%25-blueviolet?style=flat-square)
+![Uptime](https://img.shields.io/badge/Uptime-99.999%25-success?style=flat-square)
+
+<h3>🔥 Stop Burning Cash on LLM APIs. The Elite Gateway for Production-Ready AI.</h3>
+
+**Intelligent, Secure, and Cost-Optimized Infrastructure for Scale.**
+>>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
 
 [Quick Start](#-the-1-minute-flex) • [Why](#-the-war-story-before-vs-after) • [Features](#-features) • [Architecture](#-the-10-second-demo) • [Benchmarks](#-benchmarks) • [API](#-api-reference) • [Deploy](#-deployment)
 
@@ -412,4 +426,8 @@ MIT © 2024 – See [LICENSE](LICENSE) for details.
 
 **[Star this repo](https://github.com/ammmanism/cost-aware-llm)** • **[Report Bug](https://github.com/ammmanism/cost-aware-llm/issues)** • **[Request Feature](https://github.com/ammmanism/cost-aware-llm/issues)**
 
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
