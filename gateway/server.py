@@ -9,18 +9,18 @@ from typing import Dict, Any, Optional, List
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 
-from providers.base import BaseProvider
+from providers.abstract import BaseProvider
 from providers.factory import ProviderFactory
-from gateway.routers.cost_aware import CostAwareRouter
-from gateway.routers.latency_aware import LatencyAwareRouter
-from gateway.routers.fallback import FallbackRouter
-from gateway.routers.adaptive import AdaptiveRouter
+from routers.cost_aware import CostAwareRouter
+from routers.latency_aware import LatencyAwareRouter
+from routers.fallback import FallbackRouter
+from routers.adaptive import AdaptiveRouter
 from caching.cache_manager import CacheManager
 from multi_tenant.quota_manager import QuotaManager
 from multi_tenant.budget_enforcer import BudgetEnforcer
 from security.rate_limiter import RateLimiter
-from gateway.health_checker import ProviderHealthChecker
-from gateway.batcher import RequestBatcher
+from gateway.core.heartbeat import HeartbeatMonitor
+from gateway.core.batcher import NexusBatcher
 from load_balancing.least_busy import LeastBusyBalancer
 from observability.metrics.prometheus import (
     request_counter, failure_counter, latency_histogram, metrics_endpoint
@@ -29,15 +29,15 @@ from observability.metrics.cost_metrics import record_cost, update_active_stream
 from observability.tracing.open_telemetry import init_tracing, trace_span
 from observability.logging_middleware import StructuredLoggingMiddleware
 from observability.audit import AuditLogger
-from admin.router import router as admin_router, init_admin_deps
-from admin.fallback_policies import router as fallback_router, get_fallback_chain_from_policy
+from gateway.control_plane.router import router as admin_router, init_admin_deps
+from gateway.control_plane.fallback_policies import router as fallback_router, get_fallback_chain_from_policy
 from tests.chaos.chaos_controller import chaos, ChaosMode
 
 # Security
-from security.auth_middleware import APIKeyAuthMiddleware
-from security.input_guard import InputGuard
-from security.cors_config import configure_cors
-from security.security_headers import SecurityHeadersMiddleware
+from security.auth import APIKeyAuthMiddleware
+from security.firewall import SentinelFirewall
+from security.cors import configure_cors
+from security.headers import SecurityHeadersMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -47,14 +47,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global components
-health_checker = ProviderHealthChecker(check_interval=30)
+health_checker = HeartbeatMonitor(check_interval=30)
 load_balancer = LeastBusyBalancer()
 cache_manager = CacheManager()
 quota_manager = QuotaManager()
 budget_enforcer = BudgetEnforcer()
 rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
 adaptive_router = AdaptiveRouter()
-request_batcher = RequestBatcher()
+request_batcher = NexusBatcher()
 
 # Initialize admin dependencies
 init_admin_deps(cache_manager, quota_manager, budget_enforcer, health_checker)
@@ -141,11 +141,11 @@ async def generate(request: GenerateRequest, req: Request):
         request.tenant_id = req.state.tenant_id
 
     # Validation & Sanitization
-    is_valid, error_msg = InputGuard.validate(request.prompt, request.tenant_id)
+    is_valid, error_msg = SentinelFirewall.validate(request.prompt, request.tenant_id)
     if not is_valid:
         failure_counter.inc()
         raise HTTPException(status_code=400, detail=error_msg)
-    prompt_sanitized = InputGuard.sanitize(request.prompt)
+    prompt_sanitized = SentinelFirewall.sanitize(request.prompt)
 
     # Rate limiting
     allowed, _ = await rate_limiter.is_allowed(request.tenant_id)
