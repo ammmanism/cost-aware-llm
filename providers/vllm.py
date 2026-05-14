@@ -1,4 +1,5 @@
-from typing import Any, Dict, AsyncIterator
+from typing import Any, AsyncIterator, Dict
+
 from providers.abstract import BaseProvider
 
 
