@@ -1,5 +1,5 @@
-import time
 import threading
+import time
 from enum import Enum
 
 
@@ -60,7 +60,5 @@ class CircuitBreaker:
         with self.lock:
             self.failure_count += 1
             self.last_failure_time = time.time()
-            if self.state == CircuitState.CLOSED and self.failure_count >= self.failure_threshold:
-                self.state = CircuitState.OPEN
-            elif self.state == CircuitState.HALF_OPEN:
+            if self.state == CircuitState.CLOSED and self.failure_count >= self.failure_threshold or self.state == CircuitState.HALF_OPEN:
                 self.state = CircuitState.OPEN
