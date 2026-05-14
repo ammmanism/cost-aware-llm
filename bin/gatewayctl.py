@@ -1,7 +1,7 @@
-import typer
-import httpx
-import json
 import os
+
+import httpx
+import typer
 from rich.console import Console
 from rich.table import Table
 
