@@ -1,8 +1,9 @@
 import time
 from locust import HttpUser, task, between
 
+
 class BurstUser(HttpUser):
-    wait_time = between(0.1, 0.5) # Fast requests
+    wait_time = between(0.1, 0.5)  # Fast requests
 
     @task
     def burst(self):
