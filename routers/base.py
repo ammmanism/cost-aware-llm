@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 
+
 class BaseRouter(ABC):
     """
     Abstract base class for model selection routers.
-    
-    Routers are responsible for determining which LLM models should be 
-    attempted for a given request, prioritized by specific criteria 
+
+    Routers are responsible for determining which LLM models should be
+    attempted for a given request, prioritized by specific criteria
     (e.g., cost, latency, or performance).
     """
 
