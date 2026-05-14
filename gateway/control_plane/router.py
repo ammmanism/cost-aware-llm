@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends
-from typing import List
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
