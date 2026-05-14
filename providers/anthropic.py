@@ -1,11 +1,12 @@
-import os
 import asyncio
 import json
 import logging
-from typing import Dict, Any, AsyncIterator
+import os
+from typing import Any, AsyncIterator, Dict
+
 from providers.abstract import BaseProvider
-from reliability.retry import retry
 from reliability.circuit_breaker import CircuitBreaker
+from reliability.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -104,22 +105,21 @@ class AnthropicProvider(BaseProvider):
                 "stream": True,
             }
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                async with client.stream(
-                    "POST", "https://api.anthropic.com/v1/messages", json=payload, headers=headers
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            data = line[6:]
-                            try:
-                                event = json.loads(data)
-                                if event.get("type") == "content_block_delta":
-                                    yield event["delta"]["text"]
-                                elif event.get("type") == "message_stop":
-                                    break
-                            except json.JSONDecodeError:
-                                continue
+            async with httpx.AsyncClient(timeout=30.0) as client, client.stream(
+                "POST", "https://api.anthropic.com/v1/messages", json=payload, headers=headers
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        try:
+                            event = json.loads(data)
+                            if event.get("type") == "content_block_delta":
+                                yield event["delta"]["text"]
+                            elif event.get("type") == "message_stop":
+                                break
+                        except json.JSONDecodeError:
+                            continue
 
             self.circuit_breaker.record_success()
         except Exception as e:
