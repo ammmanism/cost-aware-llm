@@ -1,5 +1,5 @@
-from typing import List, Any
 import itertools
+from typing import Any, List
 
 
 class RoundRobinBalancer:
