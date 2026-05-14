@@ -7,6 +7,7 @@ import secrets
 
 logger = logging.getLogger(__name__)
 
+
 class KeyManager:
     """
     Manage tenant API keys with Redis persistence.
