@@ -2,19 +2,22 @@ import time
 import threading
 from enum import Enum
 
+
 class CircuitState(Enum):
     CLOSED = "CLOSED"
     OPEN = "OPEN"
     HALF_OPEN = "HALF_OPEN"
 
+
 class CircuitBreaker:
     """
     Implements the Circuit Breaker pattern to prevent cascading failures.
-    
-    Monitors request failures and "trips" the circuit if a threshold is reached, 
-    blocking further requests for a recovery period. This allows the failing 
+
+    Monitors request failures and "trips" the circuit if a threshold is reached,
+    blocking further requests for a recovery period. This allows the failing
     provider time to recover.
     """
+
     def __init__(self, failure_threshold: int = 3, recovery_timeout: float = 30.0):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
