@@ -1,7 +1,8 @@
-from typing import Dict, Optional
-import redis.asyncio as redis
-import os
 import logging
+import os
+from typing import Dict, Optional
+
+import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 
