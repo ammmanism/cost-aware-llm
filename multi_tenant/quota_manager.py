@@ -1,13 +1,15 @@
 from typing import Dict
 import time
 
+
 class QuotaManager:
     """
     Manages token quotas for multi-tenant isolation.
-    
-    Tracks token usage per tenant and enforces daily limits. 
+
+    Tracks token usage per tenant and enforces daily limits.
     Resets usage automatically after the 24-hour window expires.
     """
+
     def __init__(self, default_limit: int = 100000):
         # tenant_id -> {tokens_used: int, limit: int, reset_time: float}
         self._quotas: Dict[str, Any] = {}
@@ -28,9 +30,9 @@ class QuotaManager:
         await self._reset_if_needed(tenant_id)
         if tenant_id not in self._quotas:
             self._quotas[tenant_id] = {
-                "tokens_used": 0, 
-                "limit": self.default_limit, 
-                "reset_time": time.time() + 86400
+                "tokens_used": 0,
+                "limit": self.default_limit,
+                "reset_time": time.time() + 86400,
             }
         self._quotas[tenant_id]["tokens_used"] += tokens
 
