@@ -1,6 +1,6 @@
-from prometheus_client import Counter, Gauge, Histogram
-import time
 import logging
+
+from prometheus_client import Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 
