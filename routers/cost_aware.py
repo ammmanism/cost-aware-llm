@@ -1,62 +1,57 @@
 import yaml
-import os
-from typing import Dict, List, Any
+import logging
+from typing import Dict, List, Any, Optional
+from pathlib import Path
+from pydantic import BaseModel, Field
 from routers.base import BaseRouter
+
+logger = logging.getLogger(__name__)
+
+class ModelPricing(BaseModel):
+    name: str
+    cost_per_1k_tokens: float = Field(..., ge=0)
+
+class PricingConfig(BaseModel):
+    models: List[ModelPricing]
 
 class CostAwareRouter(BaseRouter):
     """
-    Router that prioritizes models based on their cost per 1k tokens.
+    Precision router that minimizes API expenditure.
     
-    This router loads model pricing from a configuration file and returns 
-    models in ascending order of cost, allowing the gateway to minimize 
-    API expenses by trying cheaper models first.
+    Prioritizes models by cost per 1k tokens using validated 
+    configuration models and async-ready selection.
     """
     def __init__(self, config_path: str = "configs/models.yaml"):
-        self.config_path = config_path
+        self.config_path = Path(config_path)
         self.model_costs: Dict[str, float] = {}
-        self.load_config()
+        self._load_config()
 
-    def load_config(self) -> None:
-        """
-        Load model configurations from a YAML file.
-        
-        Parses the 'models' section of the config to extract costs.
-        """
+    def _load_config(self) -> None:
+        """Load model pricing with strict validation."""
         try:
+            if not self.config_path.exists():
+                raise FileNotFoundError(f"Config {self.config_path} not found")
+                
             with open(self.config_path, 'r') as f:
-                config = yaml.safe_load(f)
-                for model in config.get('models', []):
-                    name = model.get('name')
-                    cost = model.get('cost_per_1k_tokens')
-                    if name and cost is not None:
-                        self.model_costs[name] = float(cost)
-        except FileNotFoundError:
-            # Fallback to sensible defaults if config missing
-            self.model_costs = {
-                "gpt-3.5-turbo": 0.002,
-                "gpt-4": 0.03,
-                "claude-3-haiku": 0.00025,
-                "claude-3-sonnet": 0.003,
-                "llama-3-8b": 0.0001,
-            }
+                data = yaml.safe_load(f)
+                config = PricingConfig(**data)
+                for model in config.models:
+                    self.model_costs[model.name] = model.cost_per_1k_tokens
+            
+            logger.info(f"Loaded pricing for {len(self.model_costs)} models into CostAwareRouter")
+            
         except Exception as e:
-            import logging
-            logging.error(f"Failed to load config from {self.config_path}: {e}")
+            logger.error(f"Failed to load CostAwareRouter config: {e}. Using resilient defaults.")
             self.model_costs = {
-                "gpt-3.5-turbo": 0.002,
-                "gpt-4": 0.03,
+                "llama-3-8b": 0.0001,
+                "claude-3-haiku": 0.00025,
+                "gpt-3.5-turbo": 0.0005,
+                "gpt-4-turbo": 0.01,
             }
 
-    def select_models(self, request_data: Dict[str, Any]) -> List[str]:
-        """
-        Return model names prioritized by cost in ascending order.
-
-        Args:
-            request_data: Contextual data for the request (not used in this router).
-
-        Returns:
-            A list of model names, with the cheapest ones first.
-        """
+    async def select_models(self, request_data: Dict[str, Any]) -> List[str]:
+        """Return model names prioritized by cost in ascending order."""
         if not self.model_costs:
             return ["gpt-3.5-turbo"]
         return sorted(self.model_costs.keys(), key=lambda m: self.model_costs[m])
+
