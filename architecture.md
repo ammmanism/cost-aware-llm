@@ -665,3 +665,6 @@ observability/
 *The system is small because each decision said no to something.*
 
 </div>
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
