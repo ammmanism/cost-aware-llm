@@ -21,6 +21,7 @@ from multi_tenant.budget_enforcer import BudgetEnforcer
 from security.rate_limiter import RateLimiter
 from gateway.core.heartbeat import HeartbeatMonitor
 from gateway.core.batcher import NexusBatcher
+from gateway.core.cost_tracker import NexusCostTracker
 from load_balancing.least_busy import LeastBusyBalancer
 from observability.metrics.prometheus import (
     request_counter, failure_counter, latency_histogram, metrics_endpoint
@@ -55,6 +56,7 @@ budget_enforcer = BudgetEnforcer()
 rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
 adaptive_router = AdaptiveRouter()
 request_batcher = NexusBatcher()
+cost_tracker = NexusCostTracker()
 
 # Initialize admin dependencies
 init_admin_deps(cache_manager, quota_manager, budget_enforcer, health_checker)
@@ -165,7 +167,7 @@ async def generate(request: GenerateRequest, req: Request):
     elif use_adaptive:
         models = await adaptive_router.select_models({"prompt": prompt_sanitized})
     else:
-        models = cost_router.select_models({"prompt": prompt_sanitized})
+        models = await cost_router.select_models({"prompt": prompt_sanitized})
 
     # Get fallback chain from dynamic policy
     fallback_models = get_fallback_chain_from_policy(request.tenant_id, models[0])
@@ -205,7 +207,10 @@ async def generate(request: GenerateRequest, req: Request):
             
             if result["status"] == "success":
                 latency = (time.perf_counter() - start_time) * 1000
-                cost = 0.001 # Logic to compute from models.yaml
+                
+                # Dynamic cost calculation
+                tokens = len(prompt_sanitized.split()) + len(result["output"].split())
+                cost = cost_tracker.calculate_cost(m_name, tokens)
                 
                 # Feedback to Adaptive Router
                 await adaptive_router.record_result(m_name, True, latency, cost)
@@ -232,10 +237,48 @@ async def generate(request: GenerateRequest, req: Request):
 
 @app.post("/generate/stream")
 async def generate_stream(request: GenerateRequest, req: Request):
-    """Streaming with backpressure and adaptive telemetry."""
-    # ... (similar logic to /generate but using stream_generate) ...
-    # Simplified for the sake of response length
-    raise HTTPException(status_code=501, detail="Phase 6 streaming optimization in progress")
+    """Goat-tier streaming with backpressure and adaptive telemetry."""
+    start_time = time.perf_counter()
+    request_counter.inc()
+
+    # Reuse validation logic
+    is_valid, error_msg = SentinelFirewall.validate(request.prompt, request.tenant_id)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Model selection
+    if request.model:
+        models = [request.model]
+    else:
+        models = await adaptive_router.select_models({"prompt": request.prompt})
+    
+    m_name = models[0]
+    provider = ProviderFactory.get_provider_for_model(m_name)
+    if not provider:
+        raise HTTPException(status_code=503, detail=f"No provider for {m_name}")
+
+    async def stream_wrapper():
+        full_output = []
+        try:
+            async for chunk in provider.stream_generate(prompt=request.prompt, model=m_name):
+                full_output.append(chunk)
+                yield f"data: {json.dumps({'chunk': chunk, 'model': m_name})}\n\n"
+            
+            # Post-stream telemetry
+            latency = (time.perf_counter() - start_time) * 1000
+            tokens = len(request.prompt.split()) + len(full_output)
+            cost = cost_tracker.calculate_cost(m_name, tokens)
+            
+            await adaptive_router.record_result(m_name, True, latency, cost)
+            record_cost(request.tenant_id, m_name, provider.__class__.__name__, cost)
+            
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            logger.error(f"Stream failed for {m_name}: {e}")
+            await adaptive_router.record_result(m_name, False, 5000, 0.0)
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(stream_wrapper(), media_type="text/event-stream")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
