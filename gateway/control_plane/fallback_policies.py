@@ -1,5 +1,6 @@
-from fastapi import APIRouter
 from typing import List
+
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/admin/fallback", tags=["admin"])
 
