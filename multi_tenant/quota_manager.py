@@ -1,5 +1,5 @@
-from typing import Dict
 import time
+from typing import Dict
 
 
 class QuotaManager:
