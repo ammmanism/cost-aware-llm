@@ -2,11 +2,12 @@ import time
 import asyncio
 from typing import Any, Dict, Optional
 
+
 class ExactCache:
     """
     In-memory L1 cache for exact string matching.
-    
-    Provides high-speed caching for environments where Redis is not available. 
+
+    Provides high-speed caching for environments where Redis is not available.
     Supports time-to-live (TTL) and thread-safe operations.
     """
 
