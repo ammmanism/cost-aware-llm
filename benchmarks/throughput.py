@@ -1,6 +1,4 @@
-import time
 import asyncio
-import httpx
 
 
 async def benchmark_throughput():
