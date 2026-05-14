@@ -1,49 +1,50 @@
-from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import JSONResponse, StreamingResponse
-import logging
-import time
-import os
-import json
 import hashlib
-from typing import Dict, Any, Optional, List
+import logging
+import os
+import time
 from contextlib import asynccontextmanager
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from providers.abstract import BaseProvider
-from providers.factory import ProviderFactory
-from routers.cost_aware import CostAwareRouter
-from routers.latency_aware import LatencyAwareRouter
-from routers.fallback import FallbackRouter
-from routers.adaptive import AdaptiveRouter
 from caching.cache_manager import CacheManager
-from multi_tenant.quota_manager import QuotaManager
-from multi_tenant.budget_enforcer import BudgetEnforcer
-from security.rate_limiter import RateLimiter
-from gateway.core.heartbeat import HeartbeatMonitor
+from gateway.control_plane.fallback_policies import (
+    get_fallback_chain_from_policy,
+)
+from gateway.control_plane.fallback_policies import (
+    router as fallback_router,
+)
+from gateway.control_plane.router import init_admin_deps
+from gateway.control_plane.router import router as admin_router
 from gateway.core.batcher import NexusBatcher
+from gateway.core.heartbeat import HeartbeatMonitor
 from load_balancing.least_busy import LeastBusyBalancer
+from multi_tenant.budget_enforcer import BudgetEnforcer
+from multi_tenant.quota_manager import QuotaManager
+from observability.logging_middleware import StructuredLoggingMiddleware
+from observability.metrics.cost_metrics import record_cost
 from observability.metrics.prometheus import (
-    request_counter,
     failure_counter,
     latency_histogram,
     metrics_endpoint,
+    request_counter,
 )
-from observability.metrics.cost_metrics import record_cost, update_active_streams
 from observability.tracing.open_telemetry import init_tracing, trace_span
-from observability.logging_middleware import StructuredLoggingMiddleware
-from observability.audit import AuditLogger
-from gateway.control_plane.router import router as admin_router, init_admin_deps
-from gateway.control_plane.fallback_policies import (
-    router as fallback_router,
-    get_fallback_chain_from_policy,
-)
-from tests.chaos.chaos_controller import chaos, ChaosMode
+from providers.factory import ProviderFactory
+from routers.adaptive import AdaptiveRouter
+from routers.cost_aware import CostAwareRouter
+from routers.fallback import FallbackRouter
+from routers.latency_aware import LatencyAwareRouter
 
 # Security
 from security.auth import APIKeyAuthMiddleware
-from security.firewall import SentinelFirewall
 from security.cors import configure_cors
+from security.firewall import SentinelFirewall
 from security.headers import SecurityHeadersMiddleware
+from security.rate_limiter import RateLimiter
+from tests.chaos.chaos_controller import ChaosMode, chaos
 
 # Configure logging
 logging.basicConfig(
