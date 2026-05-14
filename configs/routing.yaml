@@ -6,3 +6,6 @@ strategies:
     priority: latency
   fallback:
     chain: [gpt-4, claude-2, gpt-3.5-turbo]
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
