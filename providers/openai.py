@@ -1,11 +1,12 @@
-import os
 import asyncio
 import json
 import logging
-from typing import Dict, Any, AsyncIterator
+import os
+from typing import Any, AsyncIterator, Dict
+
 from providers.abstract import BaseProvider
-from reliability.retry import retry
 from reliability.circuit_breaker import CircuitBreaker
+from reliability.retry import retry
 
 logger = logging.getLogger(__name__)
 
@@ -99,25 +100,24 @@ class OpenAIProvider(BaseProvider):
                 "stream": True,
             }
 
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                async with client.stream(
-                    "POST",
-                    "https://api.openai.com/v1/chat/completions",
-                    json=payload,
-                    headers=headers,
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            data = line[6:]
-                            if data == "[DONE]":
-                                break
-                            try:
-                                chunk = json.loads(data)
-                                if chunk["choices"][0].get("delta", {}).get("content"):
-                                    yield chunk["choices"][0]["delta"]["content"]
-                            except json.JSONDecodeError:
-                                continue
+            async with httpx.AsyncClient(timeout=60.0) as client, client.stream(
+                "POST",
+                "https://api.openai.com/v1/chat/completions",
+                json=payload,
+                headers=headers,
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if line.startswith("data: "):
+                        data = line[6:]
+                        if data == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data)
+                            if chunk["choices"][0].get("delta", {}).get("content"):
+                                yield chunk["choices"][0]["delta"]["content"]
+                        except json.JSONDecodeError:
+                            continue
 
             self.circuit_breaker.record_success()
         except Exception as e:
