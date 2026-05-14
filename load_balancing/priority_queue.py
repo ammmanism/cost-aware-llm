@@ -1,6 +1,7 @@
 import heapq
 from typing import List, Tuple
 
+
 class PriorityQueueBalancer:
     def __init__(self, endpoints_with_priority: List[Tuple[int, str]]):
         self.pq = endpoints_with_priority
