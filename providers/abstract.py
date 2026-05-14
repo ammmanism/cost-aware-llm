@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, AsyncIterator
 
+
 class BaseProvider(ABC):
     """
     Foundational interface for all LLM provider integrations.
-    
-    This abstract class defines the standard contract that every provider 
-    (OpenAI, Anthropic, Gemini, etc.) must implement to be compatible with 
+
+    This abstract class defines the standard contract that every provider
+    (OpenAI, Anthropic, Gemini, etc.) must implement to be compatible with
     the gateway's routing and load balancing logic.
     """
 
