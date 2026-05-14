@@ -1,7 +1,9 @@
 import random
 
+
 class ChaosMonkey:
     """Simulate provider failures randomly."""
+
     def __init__(self, failure_rate: float = 0.2):
         self.failure_rate = failure_rate
 
