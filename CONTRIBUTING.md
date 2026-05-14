@@ -36,3 +36,6 @@ Add your new provider to the `ProviderFactory` and ensure you have included chao
 1. Update the `README.md` with details of changes to the interface or architecture, if applicable.
 2. Ensure new metrics and OpenTelemetry spans are added for new functions.
 3. Your PR requires at least 1 approval from a core maintainer before merging. All CI workflows (Bandit, Mypy, Ruff, Pytest) must pass.
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
