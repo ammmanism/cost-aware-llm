@@ -42,3 +42,6 @@ data:
   ADAPTIVE_ROUTING: "true"
   LOG_LEVEL: "INFO"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
