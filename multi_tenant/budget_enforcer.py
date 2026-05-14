@@ -5,20 +5,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class BudgetEnforcer:
     """
     Enforces spending limits for multi-tenant isolation using Redis atomic operations.
-    
-    Prevents overspending by tracking USD costs per tenant in real-time. 
+
+    Prevents overspending by tracking USD costs per tenant in real-time.
     Uses Redis for distributed consistency or falls back to in-memory tracking.
     """
-    
+
     def __init__(self, default_budget: float = 10.0):
         self.default_budget = default_budget
         self.redis_url = os.environ.get("REDIS_URL")
         self._redis: Optional[redis.Redis] = None
         self._connected = False
-        
+
         # Fallback Memory tracking for environments without Redis
         self._spending: Dict[str, float] = {}
 
@@ -45,7 +46,7 @@ class BudgetEnforcer:
             True if within budget, False otherwise.
         """
         await self._ensure_redis_connected()
-        
+
         if self._redis:
             val = await self._redis.get(f"budget:{tenant_id}:spent")
             current = float(val) if val else 0.0
@@ -63,7 +64,7 @@ class BudgetEnforcer:
             cost: Actual cost of the request in USD.
         """
         await self._ensure_redis_connected()
-        
+
         if self._redis:
             # Atomic float increment via redis INCRBYFLOAT
             await self._redis.incrbyfloat(f"budget:{tenant_id}:spent", cost)
