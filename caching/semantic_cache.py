@@ -6,17 +6,25 @@ from typing import Optional, Any, List, Tuple
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointStruct,
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class SemanticCache:
     """
     Implements a semantic L2 cache using embeddings and vector similarity search.
-    
-    Uses Sentence Transformers to generate embeddings and Qdrant as the vector 
-    database for high-speed similarity lookups. This allows the gateway to 
-    return cached responses for prompts that are semantically identical but 
+
+    Uses Sentence Transformers to generate embeddings and Qdrant as the vector
+    database for high-speed similarity lookups. This allows the gateway to
+    return cached responses for prompts that are semantically identical but
     not string-equal.
     """
 
@@ -25,7 +33,7 @@ class SemanticCache:
         embedding_model: str = "all-MiniLM-L6-v2",
         similarity_threshold: float = 0.95,
         qdrant_url: str = "http://localhost:6333",
-        collection_name: str = "llm_cache"
+        collection_name: str = "llm_cache",
     ):
         self.embedding_model_name = embedding_model
         self.similarity_threshold = similarity_threshold
@@ -38,7 +46,7 @@ class SemanticCache:
     def _lazy_init(self) -> None:
         """
         Lazily initialize the embedding model and vector DB client.
-        
+
         This prevents heavy model loading during class instantiation.
         """
         if self._initialized:
@@ -70,7 +78,7 @@ class SemanticCache:
             if not exists:
                 self._client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+                    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
                 )
                 logger.info(f"Created new Qdrant collection: {self.collection_name}")
         except Exception as e:
@@ -114,15 +122,13 @@ class SemanticCache:
                 query_filter=Filter(
                     must=[FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]
                 ),
-                limit=1
+                limit=1,
             )
 
             if search_result and search_result[0].score >= self.similarity_threshold:
                 point_id = search_result[0].id
                 points = self._client.retrieve(
-                    collection_name=self.collection_name,
-                    ids=[point_id],
-                    with_payload=True
+                    collection_name=self.collection_name, ids=[point_id], with_payload=True
                 )
                 if points:
                     return points[0].payload.get("response")
@@ -131,7 +137,9 @@ class SemanticCache:
             logger.error(f"Error during semantic cache retrieval: {e}")
             return None
 
-    async def set(self, prompt: str, tenant_id: str, response: Any, ttl: Optional[int] = None) -> None:
+    async def set(
+        self, prompt: str, tenant_id: str, response: Any, ttl: Optional[int] = None
+    ) -> None:
         """
         Store a prompt-response pair in the semantic cache.
 
@@ -158,14 +166,11 @@ class SemanticCache:
                     "tenant_id": tenant_id,
                     "prompt": prompt[:500],
                     "response": response,
-                    "created_at": time.time()
-                }
+                    "created_at": time.time(),
+                },
             )
 
-            self._client.upsert(
-                collection_name=self.collection_name,
-                points=[point]
-            )
+            self._client.upsert(collection_name=self.collection_name, points=[point])
             logger.debug(f"Successfully stored entry in semantic cache (ID: {cache_key[:8]})")
         except Exception as e:
             logger.error(f"Error storing entry in semantic cache: {e}")
@@ -185,7 +190,7 @@ class SemanticCache:
                 collection_name=self.collection_name,
                 points_selector=Filter(
                     must=[FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]
-                )
+                ),
             )
             return True
         except Exception as e:
