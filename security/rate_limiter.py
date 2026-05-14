@@ -6,15 +6,16 @@ from typing import Dict, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class RateLimiter:
     """
     Implements a robust Rate Limiter using the Token Bucket algorithm.
-    
-    Provides atomic operations via Redis Lua scripts to handle high concurrency 
-    without race conditions. Falls back to an in-memory sliding window for 
+
+    Provides atomic operations via Redis Lua scripts to handle high concurrency
+    without race conditions. Falls back to an in-memory sliding window for
     environments without Redis.
     """
-    
+
     # Lua script for atomic Token Bucket rate limiting
     LUA_SCRIPT = """
     local key = KEYS[1]
@@ -47,7 +48,7 @@ class RateLimiter:
         self.redis_url = os.environ.get("REDIS_URL")
         self._redis: Optional[redis.Redis] = None
         self._connected = False
-        
+
         # Fallback dictionary for local development/non-Redis environments
         self.requests: Dict[str, list] = {}
 
@@ -75,28 +76,26 @@ class RateLimiter:
         """
         await self._ensure_redis_connected()
         now = time.time()
-        
+
         if self._redis:
             # Atomic execution via Lua script to prevent race conditions
             key = f"ratelimit:{tenant_id}"
             result = await self._redis.eval(
-                self.LUA_SCRIPT, 1, key, 
-                self.max_requests, self.refill_rate, now
+                self.LUA_SCRIPT, 1, key, self.max_requests, self.refill_rate, now
             )
             return bool(result[0]), int(result[1])
         else:
             # Simple in-memory sliding window fallback
             if tenant_id not in self.requests:
                 self.requests[tenant_id] = []
-            
+
             # Remove expired timestamps
             self.requests[tenant_id] = [
-                req for req in self.requests[tenant_id] 
-                if now - req < self.window_seconds
+                req for req in self.requests[tenant_id] if now - req < self.window_seconds
             ]
-            
+
             if len(self.requests[tenant_id]) < self.max_requests:
                 self.requests[tenant_id].append(now)
                 return True, self.max_requests - len(self.requests[tenant_id])
-            
+
             return False, 0
