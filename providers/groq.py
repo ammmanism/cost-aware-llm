@@ -1,10 +1,12 @@
-import httpx
 import json
 import logging
 import os
-from typing import Dict, Any, AsyncIterator
-from providers.abstract import BaseProvider
+from typing import Any, AsyncIterator, Dict
+
+import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
+
+from providers.abstract import BaseProvider
 
 logger = logging.getLogger(__name__)
 
@@ -68,19 +70,18 @@ class GroqProvider(BaseProvider):
             "stream": True,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            async with client.stream(
-                "POST", self.base_url, headers=self.headers, json=payload
-            ) as response:
-                async for line in response.aiter_lines():
-                    if line.startswith("data: "):
-                        data_str = line[6:]
-                        if data_str == "[DONE]":
-                            break
-                        try:
-                            data = json.loads(data_str)
-                            chunk = data["choices"][0]["delta"].get("content", "")
-                            if chunk:
-                                yield chunk
-                        except Exception:
-                            continue
+        async with httpx.AsyncClient(timeout=30.0) as client, client.stream(
+            "POST", self.base_url, headers=self.headers, json=payload
+        ) as response:
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    data_str = line[6:]
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        data = json.loads(data_str)
+                        chunk = data["choices"][0]["delta"].get("content", "")
+                        if chunk:
+                            yield chunk
+                    except Exception:
+                        continue
