@@ -4,10 +4,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class SentinelFirewall:
     """
     Provides input validation and sanitization for LLM prompts to ensure security.
-    
+
     The firewall identifies and blocks common attack vectors, including:
     - Prompt Injection: Attempts to override system instructions.
     - PII Leakage: Accidental submission of sensitive personal data (SSN, Email, etc.).
@@ -60,14 +61,17 @@ class SentinelFirewall:
         if len(prompt) > cls.MAX_PROMPT_LENGTH:
             return False, f"Prompt exceeds maximum length of {cls.MAX_PROMPT_LENGTH} characters"
 
-        if prompt.count('\n') > cls.MAX_PROMPT_LINES:
+        if prompt.count("\n") > cls.MAX_PROMPT_LINES:
             return False, f"Prompt exceeds maximum of {cls.MAX_PROMPT_LINES} lines"
 
         # 2. PII detection (Privacy enforcement)
         for pii_type, pattern in cls.PII_PATTERNS.items():
             if re.search(pattern, prompt, re.IGNORECASE):
                 logger.warning(f"PII detected in prompt from tenant '{tenant_id}': {pii_type}")
-                return False, f"Security violation: Prompt contains potential {pii_type.replace('_', ' ')}"
+                return (
+                    False,
+                    f"Security violation: Prompt contains potential {pii_type.replace('_', ' ')}",
+                )
 
         # 3. Injection detection (Model safety)
         for pattern in cls.INJECTION_PATTERNS:
@@ -89,9 +93,9 @@ class SentinelFirewall:
             The sanitized string.
         """
         # Remove control characters except newline and tab to prevent terminal-escape attacks
-        prompt = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', prompt)
-        
+        prompt = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", prompt)
+
         # Normalize whitespace (collapsing multiple spaces)
-        prompt = re.sub(r'\s+', ' ', prompt).strip()
-        
+        prompt = re.sub(r"\s+", " ", prompt).strip()
+
         return prompt
