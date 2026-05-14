@@ -9,13 +9,15 @@ from reliability.circuit_breaker import CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
+
 class GeminiProvider(BaseProvider):
     """
     Provider implementation for Google's Gemini API.
-    
-    Supports flash and pro models with optimized SSE streaming. 
+
+    Supports flash and pro models with optimized SSE streaming.
     Includes reliability wrappers for production stability.
     """
+
     def __init__(self):
         self.api_key = os.environ.get("GEMINI_API_KEY")
         self.circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=30)
@@ -36,21 +38,17 @@ class GeminiProvider(BaseProvider):
                 await asyncio.sleep(0.12)
                 output = f"[Gemini Mock] Response for: {prompt[:50]}..."
                 self.circuit_breaker.record_success()
-                return {
-                    "provider": "google",
-                    "model": model,
-                    "output": output,
-                    "status": "success"
-                }
+                return {"provider": "google", "model": model, "output": output, "status": "success"}
 
             import httpx
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "maxOutputTokens": kwargs.get("max_tokens", 1024),
-                    "temperature": kwargs.get("temperature", 0.7)
-                }
+                    "temperature": kwargs.get("temperature", 0.7),
+                },
             }
 
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -60,12 +58,7 @@ class GeminiProvider(BaseProvider):
                 output = data["candidates"][0]["content"]["parts"][0]["text"]
 
             self.circuit_breaker.record_success()
-            return {
-                "provider": "google",
-                "model": model,
-                "output": output,
-                "status": "success"
-            }
+            return {"provider": "google", "model": model, "output": output, "status": "success"}
         except Exception as e:
             self.circuit_breaker.record_failure()
             logger.error(f"Gemini completion failure: {e}")
@@ -88,13 +81,14 @@ class GeminiProvider(BaseProvider):
                 return
 
             import httpx
+
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?key={self.api_key}&alt=sse"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
                     "maxOutputTokens": kwargs.get("max_tokens", 1024),
-                    "temperature": kwargs.get("temperature", 0.7)
-                }
+                    "temperature": kwargs.get("temperature", 0.7),
+                },
             }
 
             async with httpx.AsyncClient(timeout=30.0) as client:
