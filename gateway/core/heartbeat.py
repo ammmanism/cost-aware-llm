@@ -1,7 +1,8 @@
 import asyncio
+import contextlib
 import logging
-from typing import Dict
 from enum import Enum
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +31,8 @@ class HeartbeatMonitor:
         self._running = False
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         logger.info("Heartbeat monitor stopped")
 
     async def _run(self):
