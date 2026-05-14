@@ -14,15 +14,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def init_tracing(app=None, service_name: str = "llm-gateway"):
     """Initialize OpenTelemetry with OTLP exporter."""
     otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
-    
-    resource = Resource(attributes={
-        SERVICE_NAME: service_name,
-        "deployment.environment": os.environ.get("ENVIRONMENT", "development")
-    })
-    
+
+    resource = Resource(
+        attributes={
+            SERVICE_NAME: service_name,
+            "deployment.environment": os.environ.get("ENVIRONMENT", "development"),
+        }
+    )
+
     provider = TracerProvider(resource=resource)
     try:
         processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=otlp_endpoint))
@@ -30,19 +33,21 @@ def init_tracing(app=None, service_name: str = "llm-gateway"):
         trace.set_tracer_provider(provider)
     except Exception as e:
         logger.warning(f"Failed to initialize OTLP exporter: {e}")
-    
+
     # Instrument libraries
     RedisInstrumentor().instrument()
     HTTPXClientInstrumentor().instrument()
-    
+
     if app:
         FastAPIInstrumentor.instrument_app(app)
-    
+
     logger.info(f"OpenTelemetry initialized with OTLP endpoint: {otlp_endpoint}")
     return provider
 
+
 def trace_span(name: str, attributes: dict = None):
     """Decorator to create a span around an async function."""
+
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -58,8 +63,11 @@ def trace_span(name: str, attributes: dict = None):
                     span.set_status(Status(StatusCode.ERROR, str(e)))
                     span.record_exception(e)
                     raise
+
         return wrapper
+
     return decorator
+
 
 # Keep original @trace stub for backward compatibility, now using real spans
 def trace(func):
