@@ -5,13 +5,16 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class ProviderStatus(Enum):
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
 
+
 class HeartbeatMonitor:
     """Monitor for LLM provider health."""
+
     def __init__(self, check_interval: int = 30):
         self.check_interval = check_interval
         self.status: Dict[str, ProviderStatus] = {}
