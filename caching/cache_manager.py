@@ -7,14 +7,15 @@ from caching.semantic_cache import SemanticCache
 
 logger = logging.getLogger(__name__)
 
+
 class CacheManager:
     """
     Orchestrates multi-level caching for LLM responses.
-    
+
     Levels:
     - L1 (Exact): Redis or In-memory hash map for identical prompts.
     - L2 (Semantic): Vector database (Qdrant) for similar prompts.
-    
+
     Includes protection against 'Cache Stampede' using localized locking.
     """
 
@@ -36,7 +37,7 @@ class CacheManager:
         if self._use_semantic:
             self.semantic_cache = SemanticCache(
                 qdrant_url=os.environ.get("QDRANT_URL", "http://localhost:6333"),
-                similarity_threshold=float(os.environ.get("SEMANTIC_THRESHOLD", "0.95"))
+                similarity_threshold=float(os.environ.get("SEMANTIC_THRESHOLD", "0.95")),
             )
         else:
             self.semantic_cache = None
@@ -53,7 +54,9 @@ class CacheManager:
                 # Don't try again immediately to avoid spamming
                 self._use_redis = False
 
-    async def get(self, key: str, prompt: Optional[str] = None, tenant_id: str = "default") -> Optional[Any]:
+    async def get(
+        self, key: str, prompt: Optional[str] = None, tenant_id: str = "default"
+    ) -> Optional[Any]:
         """
         Retrieve a value from the multi-level cache.
 
@@ -75,7 +78,7 @@ class CacheManager:
         # 2. Guard against Cache Stampede for L2/LLM calls
         if key not in self._locks:
             self._locks[key] = asyncio.Lock()
-        
+
         async with self._locks[key]:
             # Double-check L1 after acquiring lock
             exact_value = await self.exact_cache.get(key)
@@ -93,7 +96,14 @@ class CacheManager:
 
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None, prompt: Optional[str] = None, tenant_id: str = "default") -> None:
+    async def set(
+        self,
+        key: str,
+        value: Any,
+        ttl: Optional[int] = None,
+        prompt: Optional[str] = None,
+        tenant_id: str = "default",
+    ) -> None:
         """
         Store a value in both L1 and L2 caches.
 
