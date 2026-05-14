@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, AsyncIterator
+from typing import Any, AsyncIterator, Dict
 
 
 class BaseProvider(ABC):
