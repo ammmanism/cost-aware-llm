@@ -1,19 +1,17 @@
-import os
-import logging
-import asyncio
 import hashlib
-from typing import Optional, Any, List, Tuple
-import numpy as np
-from sentence_transformers import SentenceTransformer
+import logging
+from typing import Any, List, Optional
+
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
-    VectorParams,
-    PointStruct,
-    Filter,
     FieldCondition,
+    Filter,
     MatchValue,
+    PointStruct,
+    VectorParams,
 )
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +184,7 @@ class SemanticCache:
         if not self._client:
             return False
         try:
-            result = self._client.delete(
+            self._client.delete(
                 collection_name=self.collection_name,
                 points_selector=Filter(
                     must=[FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id))]
