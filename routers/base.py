@@ -11,7 +11,7 @@ class BaseRouter(ABC):
     """
 
     @abstractmethod
-    def select_models(self, request_data: Dict[str, Any]) -> List[str]:
+    async def select_models(self, request_data: Dict[str, Any]) -> List[str]:
         """
         Return a prioritized list of model identifiers based on the request context.
 
