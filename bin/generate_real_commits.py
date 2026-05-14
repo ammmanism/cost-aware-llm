@@ -1,6 +1,5 @@
 import os
 import subprocess
-import time
 
 
 def run_cmd(cmd):
@@ -20,7 +19,7 @@ def main():
 
     # find all python files except in venv
     py_files = []
-    for root, dirs, files in os.walk("."):
+    for root, _dirs, files in os.walk("."):
         if "venv" in root or ".pytest_cache" in root or ".git" in root:
             continue
         for f in files:
