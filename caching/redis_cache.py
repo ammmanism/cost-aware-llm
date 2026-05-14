@@ -1,12 +1,14 @@
 from typing import Optional, Any
 import json
 
+
 class RedisCache:
     """
     Standard Redis-backed cache for exact prompt matching.
-    
+
     Provides fast, persistent storage for frequently used LLM responses.
     """
+
     def __init__(self, redis_url: str):
         self.redis_url = redis_url
         self.cache: Dict[str, Any] = {}
