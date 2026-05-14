@@ -1,13 +1,15 @@
 from typing import List, Any
 import asyncio
 
+
 class LeastBusyBalancer:
     """
     Load balancer that routes requests to the provider with the fewest active tasks.
-    
-    This strategy ensures that no single provider is overwhelmed while others 
+
+    This strategy ensures that no single provider is overwhelmed while others
     are idle, optimizing throughput and response times.
     """
+
     def __init__(self, providers: List[Any] = None):
         self.providers = providers or []
         self._active_requests = {p: 0 for p in self.providers}
@@ -23,7 +25,7 @@ class LeastBusyBalancer:
         async with self._lock:
             if not self.providers:
                 return None
-            
+
             # Find provider with minimum active requests
             min_provider = min(self.providers, key=lambda p: self._active_requests.get(p, 0))
             self._active_requests[min_provider] = self._active_requests.get(min_provider, 0) + 1
