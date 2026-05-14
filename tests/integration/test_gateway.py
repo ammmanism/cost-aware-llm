@@ -1,10 +1,10 @@
-import pytest
-import httpx
 import asyncio
-from typing import Dict
+
+import pytest
 
 # This requires the server to be running or use TestClient
 from fastapi.testclient import TestClient
+
 from gateway.server import app
 
 client = TestClient(app)
@@ -85,9 +85,9 @@ async def test_cache_hit_logic(auth_headers):
     client.post("/generate", json=prompt, headers=auth_headers)
 
     # Second request
-    start = asyncio.get_event_loop().time()
+    asyncio.get_event_loop().time()
     response = client.post("/generate", json=prompt, headers=auth_headers)
-    end = asyncio.get_event_loop().time()
+    asyncio.get_event_loop().time()
 
     # Cache hit should be sub-50ms or significantly faster than API
     # Since we use a real Redis/Mock, we check for status or latency
