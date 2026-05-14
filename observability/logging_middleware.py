@@ -8,19 +8,20 @@ from starlette.responses import Response
 
 logger = logging.getLogger("gateway.access")
 
+
 class StructuredLoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware that provides structured JSON logging for all incoming requests.
-    
-    Each log entry includes a unique correlation ID (request_id) to allow 
-    tracing a single request through the system. This is essential for 
+
+    Each log entry includes a unique correlation ID (request_id) to allow
+    tracing a single request through the system. This is essential for
     high-scale production observability.
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
         """
         Intercepts each request to record metrics and log structured data.
-        
+
         Captures method, path, status code, duration, and client metadata.
         """
         request_id = str(uuid.uuid4())
@@ -41,7 +42,14 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         response.headers["X-Request-ID"] = request_id
         return response
 
-    def _log_request(self, request: Request, status_code: int, duration_ms: float, request_id: str, error: str = None):
+    def _log_request(
+        self,
+        request: Request,
+        status_code: int,
+        duration_ms: float,
+        request_id: str,
+        error: str = None,
+    ):
         """Helper to format and output the structured log."""
         log_data = {
             "timestamp": time.time(),
