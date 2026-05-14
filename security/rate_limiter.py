@@ -1,8 +1,9 @@
-import time
-import os
 import logging
+import os
+import time
+from typing import Dict, Optional, Tuple
+
 import redis.asyncio as redis
-from typing import Dict, Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +24,15 @@ class RateLimiter:
     local refill_rate = tonumber(ARGV[2])
     local now = tonumber(ARGV[3])
     local requested = 1
-    
+
     local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
     local tokens = tonumber(bucket[1]) or max_tokens
     local last_refill = tonumber(bucket[2]) or now
-    
+
     local elapsed_time = math.max(0, now - last_refill)
     local refilled_tokens = elapsed_time * refill_rate
     tokens = math.min(max_tokens, tokens + refilled_tokens)
-    
+
     if tokens >= requested then
         tokens = tokens - requested
         redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
