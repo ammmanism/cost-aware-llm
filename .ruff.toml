@@ -41,3 +41,6 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
