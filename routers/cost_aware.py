@@ -3,14 +3,16 @@ import os
 from typing import Dict, List, Any
 from routers.base import BaseRouter
 
+
 class CostAwareRouter(BaseRouter):
     """
     Router that prioritizes models based on their cost per 1k tokens.
-    
-    This router loads model pricing from a configuration file and returns 
-    models in ascending order of cost, allowing the gateway to minimize 
+
+    This router loads model pricing from a configuration file and returns
+    models in ascending order of cost, allowing the gateway to minimize
     API expenses by trying cheaper models first.
     """
+
     def __init__(self, config_path: str = "configs/models.yaml"):
         self.config_path = config_path
         self.model_costs: Dict[str, float] = {}
@@ -19,15 +21,15 @@ class CostAwareRouter(BaseRouter):
     def load_config(self) -> None:
         """
         Load model configurations from a YAML file.
-        
+
         Parses the 'models' section of the config to extract costs.
         """
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 config = yaml.safe_load(f)
-                for model in config.get('models', []):
-                    name = model.get('name')
-                    cost = model.get('cost_per_1k_tokens')
+                for model in config.get("models", []):
+                    name = model.get("name")
+                    cost = model.get("cost_per_1k_tokens")
                     if name and cost is not None:
                         self.model_costs[name] = float(cost)
         except FileNotFoundError:
@@ -41,6 +43,7 @@ class CostAwareRouter(BaseRouter):
             }
         except Exception as e:
             import logging
+
             logging.error(f"Failed to load config from {self.config_path}: {e}")
             self.model_costs = {
                 "gpt-3.5-turbo": 0.002,
