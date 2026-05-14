@@ -6,20 +6,22 @@ from providers.groq import GroqProvider
 from providers.vllm import VLLMProvider
 from typing import Dict, Any, Optional
 
+
 class ProviderFactory:
     """
     Singleton factory for managing LLM provider instances.
-    
-    This factory handles the mapping between model names and their respective 
+
+    This factory handles the mapping between model names and their respective
     provider implementations, ensuring that requests are routed correctly.
     """
+
     _providers = {
         "openai": OpenAIProvider(),
         "anthropic": AnthropicProvider(),
         "google": GeminiProvider(),
         "together": TogetherProvider(),
         "groq": GroqProvider(),
-        "vllm": VLLMProvider()
+        "vllm": VLLMProvider(),
     }
 
     @classmethod
