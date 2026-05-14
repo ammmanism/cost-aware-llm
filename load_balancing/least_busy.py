@@ -1,5 +1,5 @@
-from typing import List, Any
 import asyncio
+from typing import Any, List
 
 
 class LeastBusyBalancer:
@@ -12,7 +12,7 @@ class LeastBusyBalancer:
 
     def __init__(self, providers: List[Any] = None):
         self.providers = providers or []
-        self._active_requests = {p: 0 for p in self.providers}
+        self._active_requests = dict.fromkeys(self.providers, 0)
         self._lock = asyncio.Lock()
 
     async def get_provider(self) -> Any:
