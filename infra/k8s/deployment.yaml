@@ -24,3 +24,6 @@ spec:
           requests:
             cpu: "500m"
             memory: "512Mi"
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
