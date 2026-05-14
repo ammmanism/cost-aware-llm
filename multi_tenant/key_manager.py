@@ -1,9 +1,10 @@
-import os
-import logging
-from typing import Dict, Optional, Tuple
-import redis.asyncio as redis
 import hashlib
+import logging
+import os
 import secrets
+from typing import Optional
+
+import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 
