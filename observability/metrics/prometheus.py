@@ -1,5 +1,5 @@
-from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 from fastapi import Response
+from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 
 request_counter = Counter("llm_gateway_requests_total", "Total requests")
 failure_counter = Counter("llm_gateway_failures_total", "Total failures")
