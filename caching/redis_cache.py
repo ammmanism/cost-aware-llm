@@ -1,5 +1,4 @@
-from typing import Optional, Any
-import json
+from typing import Any, Optional
 
 
 class RedisCache:
