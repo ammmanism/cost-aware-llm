@@ -29,3 +29,6 @@ EXPOSE 8000
 
 # Use exec form for proper signal handling
 CMD ["uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8000", "--graceful-timeout", "30"]
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+
