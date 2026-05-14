@@ -1,5 +1,5 @@
 # Steady state load test scenario
-from locust import HttpUser, task, between
+from locust import HttpUser, between, task
 
 
 class SteadyStateUser(HttpUser):
