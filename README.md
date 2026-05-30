@@ -1,12 +1,8 @@
-# 🚀 cost-aware-llm
+﻿# ðŸš€ cost-aware-llm
 
 <div align="center">
 
-<<<<<<< HEAD
-![Version](https://img.shields.io/badge/version-6.0.0-blue?style=for-the-badge)
-=======
 ![Version](https://img.shields.io/badge/version-6.1.0-blue?style=for-the-badge)
->>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
 ![Python](https://img.shields.io/badge/python-3.11+-blue?style=for-the-badge&logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi)
 ![Redis](https://img.shields.io/badge/Redis-7.0+-DC382D?style=for-the-badge&logo=redis)
@@ -15,31 +11,21 @@
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 
 <!-- Viral Social Proof Badges -->
-<<<<<<< HEAD
-![Response Time](https://img.shields.io/badge/Avg_Latency-<50ms-brightgreen?style=flat-square)
-![Cost Savings](https://img.shields.io/badge/Cost_Reduction-72%25-blueviolet?style=flat-square)
-![Uptime](https://img.shields.io/badge/Uptime-99.99%25-success?style=flat-square)
-
-<h3>🔥 Stop Burning Cash on OpenAI. The Elite Gateway for Cost‑Optimized AI Production.</h3>
-
-**LLM Infrastructure that pays for its own server costs — and then some.**
-=======
 ![Response Time](https://img.shields.io/badge/Avg_Latency-<45ms-brightgreen?style=flat-square)
 ![Cost Savings](https://img.shields.io/badge/Cost_Reduction-75%25-blueviolet?style=flat-square)
 ![Uptime](https://img.shields.io/badge/Uptime-99.999%25-success?style=flat-square)
 
-<h3>🔥 Stop Burning Cash on LLM APIs. The Elite Gateway for Production-Ready AI.</h3>
+<h3>ðŸ”¥ Stop Burning Cash on LLM APIs. The Elite Gateway for Production-Ready AI.</h3>
 
 **Intelligent, Secure, and Cost-Optimized Infrastructure for Scale.**
->>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
 
-[Quick Start](#-the-1-minute-flex) • [Why](#-the-war-story-before-vs-after) • [Features](#-features) • [Architecture](#-the-10-second-demo) • [Benchmarks](#-benchmarks) • [API](#-api-reference) • [Deploy](#-deployment)
+[Quick Start](#-the-1-minute-flex) â€¢ [Why](#-the-war-story-before-vs-after) â€¢ [Features](#-features) â€¢ [Cost Controls](docs/cost_controls.md) â€¢ [Architecture](#-the-10-second-demo) â€¢ [Benchmarks](#-benchmarks) â€¢ [API](#-api-reference) â€¢ [Deploy](#-deployment)
 
 </div>
 
 ---
 
-## 🎬 The 10‑Second Demo
+## ðŸŽ¬ The 10â€‘Second Demo
 
 Here's what happens every time a request hits `cost-aware-llm`:
 
@@ -63,102 +49,102 @@ graph LR
 
 ---
 
-## ⚔️ The War Story: Before vs. After
+## âš”ï¸ The War Story: Before vs. After
 
-### 😫 **Before `cost-aware-llm`**
+### ðŸ˜« **Before `cost-aware-llm`**
 
 | Metric | Reality |
 |--------|---------|
 | **Monthly Invoice** | $4,200 (mostly repetitive prompts) |
 | **Outage Impact** | 4 hours downtime because OpenAI returned 503s |
-| **User Experience** | 5‑second waits, then rage‑clicks |
+| **User Experience** | 5â€‘second waits, then rageâ€‘clicks |
 | **Developer Nightmare** | "Is the API down again?" Slack messages at 2 AM |
 
-### 🏆 **After `cost-aware-llm`**
+### ðŸ† **After `cost-aware-llm`**
 
 | Metric | Reality |
 |--------|---------|
 | **Monthly Invoice** | $1,100 (semantic cache catches 40% of traffic) |
-| **Outage Impact** | OpenAI went down → **0 failed requests**. Gateway instantly failed over to Anthropic. |
+| **Outage Impact** | OpenAI went down â†’ **0 failed requests**. Gateway instantly failed over to Anthropic. |
 | **User Experience** | 47ms for cached responses. Feels instant. |
-| **Developer Sleep** | 😴 Full night. Circuit breakers handled everything. |
+| **Developer Sleep** | ðŸ˜´ Full night. Circuit breakers handled everything. |
 
 ---
 
-## ✨ Features
+## âœ¨ Features
 
-### 🧠 Intelligent Routing
-- **Cost‑Aware** — automatically picks cheapest model that meets quality bar
-- **Latency‑Aware** — routes to fastest model when speed matters
-- **Adaptive (Multi‑Armed Bandit)** — learns from real‑time performance to maximize success‑per‑dollar
-- **Fallback Chains** — configurable per‑tenant model failover order
+### ðŸ§  Intelligent Routing
+- **Costâ€‘Aware** â€” automatically picks cheapest model that meets quality bar
+- **Latencyâ€‘Aware** â€” routes to fastest model when speed matters
+- **Adaptive (Multiâ€‘Armed Bandit)** â€” learns from realâ€‘time performance to maximize successâ€‘perâ€‘dollar
+- **Fallback Chains** â€” configurable perâ€‘tenant model failover order
 
-### 💾 Multi‑Tier Caching
-- **L1: Exact Match (Redis)** — identical prompts return instantly (<5ms)
-- **L2: Semantic Cache (Qdrant)** — similar prompts (95%+ match) skip LLM call entirely
-- **Combined Hit Rate:** 30‑40% in production workloads
+### ðŸ’¾ Multiâ€‘Tier Caching
+- **L1: Exact Match (Redis)** â€” identical prompts return instantly (<5ms)
+- **L2: Semantic Cache (Qdrant)** â€” similar prompts (95%+ match) skip LLM call entirely
+- **Combined Hit Rate:** 30â€‘40% in production workloads
 
-### 🌐 Multi‑Provider Support
-- OpenAI (GPT‑3.5, GPT‑4)
+### ðŸŒ Multiâ€‘Provider Support
+- OpenAI (GPTâ€‘3.5, GPTâ€‘4)
 - Anthropic (Claude 3 Haiku/Sonnet)
 - Google Gemini (1.5 Flash/Pro)
 - Together AI (Llama 3, Mixtral)
-- *Extensible — add new providers in <50 lines of code*
+- *Extensible â€” add new providers in <50 lines of code*
 
-### 🛡️ Production‑Grade Resilience
-- **Circuit Breakers** — stop cascading failures when a provider degrades
-- **Exponential Backoff Retries** — with jitter to prevent thundering herd
-- **Health Checks** — background process marks unhealthy providers (auto‑excluded)
+### ðŸ›¡ï¸ Productionâ€‘Grade Resilience
+- **Circuit Breakers** â€” stop cascading failures when a provider degrades
+- **Exponential Backoff Retries** â€” with jitter to prevent thundering herd
+- **Health Checks** â€” background process marks unhealthy providers (autoâ€‘excluded)
 
-### 🔥 **Resilience via Chaos: We Assume Your Providers Will Fail**
+### ðŸ”¥ **Resilience via Chaos: We Assume Your Providers Will Fail**
 We've baked chaos engineering directly into the gateway.  
 - **Simulate provider failures** via admin API  
 - **Inject artificial latency** to test fallback behavior  
-- **Validate zero‑downtime failover** before production incidents happen  
+- **Validate zeroâ€‘downtime failover** before production incidents happen  
 
 *This is what separates "it works" from "it survives."*
 
-### 🔒 Enterprise Security
-- **API Key Authentication** — tenant‑scoped keys (never expose provider keys)
-- **Input Sanitization** — blocks prompt injection & PII leakage
-- **Rate Limiting** — sliding window (Redis‑backed, per‑tenant)
-- **Quotas & Budgets** — hard token limits and USD spending caps
-- **Audit Logging** — every request logged in structured JSON (ready for SIEM)
+### ðŸ”’ Enterprise Security
+- **API Key Authentication** â€” tenantâ€‘scoped keys (never expose provider keys)
+- **Input Sanitization** â€” blocks prompt injection & PII leakage
+- **Rate Limiting** â€” sliding window (Redisâ€‘backed, perâ€‘tenant)
+- **Quotas & Budgets** â€” hard token limits and USD spending caps
+- **Audit Logging** â€” every request logged in structured JSON (ready for SIEM)
 
-### 📊 Full Observability
-- **Prometheus Metrics** — requests, latency, costs, cache ratio, active streams
-- **OpenTelemetry Tracing** — end‑to‑end spans exported to Jaeger/Tempo
-- **Structured JSON Logs** — with correlation IDs for distributed debugging
-- **Admin Dashboard** — web UI for real‑time stats and configuration
+### ðŸ“Š Full Observability
+- **Prometheus Metrics** â€” requests, latency, costs, cache ratio, active streams
+- **OpenTelemetry Tracing** â€” endâ€‘toâ€‘end spans exported to Jaeger/Tempo
+- **Structured JSON Logs** â€” with correlation IDs for distributed debugging
+- **Admin Dashboard** â€” web UI for realâ€‘time stats and configuration
 
-### ⚡ Streaming & Performance
-- **Server‑Sent Events (SSE)** — first token in <100ms perceived latency
-- **Request Batching** — combine small prompts to reduce API overhead
-- **Backpressure Handling** — protects gateway from slow clients
+### âš¡ Streaming & Performance
+- **Serverâ€‘Sent Events (SSE)** â€” first token in <100ms perceived latency
+- **Request Batching** â€” combine small prompts to reduce API overhead
+- **Backpressure Handling** â€” protects gateway from slow clients
 
-### 🏢 Multi‑Tenant Ready
+### ðŸ¢ Multiâ€‘Tenant Ready
 - Isolated quotas, budgets, and rate limits per tenant
-- Tenant‑specific fallback policies
+- Tenantâ€‘specific fallback policies
 - Perfect for SaaS platforms reselling AI capabilities
 
 ---
 
-## 🆚 Why `cost-aware-llm` Beats the Alternatives
+## ðŸ†š Why `cost-aware-llm` Beats the Alternatives
 
 | Feature | LiteLLM | Portkey | **cost-aware-llm** |
 | :--- | :---: | :---: | :---: |
 | **Semantic Cache** | Basic | Paid | **Adaptive L2 (Qdrant)** |
-| **Chaos Controller** | ❌ | ❌ | **✅ Built‑in** |
-| **RL Routing** | ❌ | Partial | **✅ Multi‑Armed Bandit** |
-| **Local Hardware Optimized** | ❌ | ❌ | **✅ Runs on 4GB RAM** |
-| **Open Source** | ✅ | Partial | **✅ 100% MIT** |
+| **Chaos Controller** | âŒ | âŒ | **âœ… Builtâ€‘in** |
+| **RL Routing** | âŒ | Partial | **âœ… Multiâ€‘Armed Bandit** |
+| **Local Hardware Optimized** | âŒ | âŒ | **âœ… Runs on 4GB RAM** |
+| **Open Source** | âœ… | Partial | **âœ… 100% MIT** |
 
 ---
 
-## 📊 Benchmarks
+## ðŸ“Š Benchmarks
 
-Real‑world performance from a production deployment handling ~5M requests/month.  
-*Engineered for efficiency: Runs perfectly on low‑cost, 4GB RAM instances.*
+Realâ€‘world performance from a production deployment handling ~5M requests/month.  
+*Engineered for efficiency: Runs perfectly on lowâ€‘cost, 4GB RAM instances.*
 
 ### Cost Savings
 
@@ -191,10 +177,10 @@ Real‑world performance from a production deployment handling ~5M requests/mont
 
 ---
 
-## ⚡ The 1‑Minute Flex (Quick Start)
+## âš¡ The 1â€‘Minute Flex (Quick Start)
 
 ```bash
-# The "God‑Mode" Start
+# The "Godâ€‘Mode" Start
 git clone https://github.com/ammmanism/cost-aware-llm.git && cd cost-aware-llm
 make production-up
 ```
@@ -215,7 +201,7 @@ curl -X POST http://localhost:8000/generate \
 
 ---
 
-## 📖 API Reference
+## ðŸ“– API Reference
 
 ### Core Endpoints
 
@@ -233,7 +219,7 @@ curl -X POST http://localhost:8000/generate \
   "prompt": "Your prompt text",
   "tenant_id": "demo",          // optional if using auth header
   "use_cache": true,            // default true
-  "prefer_latency": false,      // false = cost‑aware routing
+  "prefer_latency": false,      // false = costâ€‘aware routing
   "model": null,                // optional, override routing
   "stream": false               // set true for streaming endpoint
 }
@@ -266,7 +252,7 @@ curl -X POST http://localhost:8000/generate \
 
 ---
 
-## ⚙️ Configuration
+## âš™ï¸ Configuration
 
 ### Essential Environment Variables
 
@@ -274,7 +260,7 @@ curl -X POST http://localhost:8000/generate \
 |----------|-------------|---------|
 | `REDIS_URL` | Redis connection string | `redis://localhost:6379/0` |
 | `QDRANT_URL` | Qdrant server URL | `http://localhost:6333` |
-| `API_KEYS` | Comma‑separated `tenant:key` pairs | `tenant_alpha:sk-test-123` |
+| `API_KEYS` | Commaâ€‘separated `tenant:key` pairs | `tenant_alpha:sk-test-123` |
 | `ADMIN_API_KEY` | Admin API key | `admin-secret-key` |
 | `OPENAI_API_KEY` | OpenAI API key | (mock if absent) |
 | `ANTHROPIC_API_KEY` | Anthropic API key | (mock if absent) |
@@ -301,7 +287,7 @@ models:
 
 ---
 
-## 🚢 Deployment
+## ðŸš¢ Deployment
 
 ### Docker Compose (Single Node)
 
@@ -311,7 +297,7 @@ make production-up
 docker-compose -f infra/docker-compose.yml up -d
 ```
 
-### Multi‑Replica Scaling
+### Multiâ€‘Replica Scaling
 
 ```bash
 docker-compose -f infra/docker-compose.yml up --scale gateway=3 -d
@@ -329,7 +315,7 @@ helm install my-gateway cost-aware-llm/gateway \
 
 ### Production Checklist
 
-- [ ] Set strong `ADMIN_API_KEY` and per‑tenant `API_KEYS`
+- [ ] Set strong `ADMIN_API_KEY` and perâ€‘tenant `API_KEYS`
 - [ ] Use managed Redis (ElastiCache) and Qdrant Cloud
 - [ ] Enable TLS for all endpoints
 - [ ] Restrict `ALLOWED_ORIGINS` to your frontend domain
@@ -338,7 +324,7 @@ helm install my-gateway cost-aware-llm/gateway \
 
 ---
 
-## 🧪 Testing & Chaos Engineering
+## ðŸ§ª Testing & Chaos Engineering
 
 ### Load Testing with Locust
 
@@ -365,28 +351,28 @@ curl -X POST http://localhost:8000/admin/chaos/off \
 
 ---
 
-## 🗺️ Roadmap
+## ðŸ—ºï¸ Roadmap
 
-### ✅ Completed (v1.0 – v6.0)
+### âœ… Completed (v1.0 â€“ v6.0)
 - [x] Core gateway with FastAPI
-- [x] Multi‑provider support (OpenAI, Anthropic, Gemini, Together)
+- [x] Multiâ€‘provider support (OpenAI, Anthropic, Gemini, Together)
 - [x] Exact + semantic caching (Redis + Qdrant)
 - [x] Streaming (SSE)
 - [x] Circuit breaker & retries
-- [x] Multi‑tenant quotas/budgets
+- [x] Multiâ€‘tenant quotas/budgets
 - [x] Rate limiting (sliding window)
 - [x] Admin API
 - [x] Prometheus + OpenTelemetry
-- [x] Adaptive routing (Multi‑Armed Bandit)
+- [x] Adaptive routing (Multiâ€‘Armed Bandit)
 - [x] Chaos engineering tools
 - [x] Docker Compose & Kubernetes Helm
 
-### 🚧 In Progress
+### ðŸš§ In Progress
 - [ ] Web UI Dashboard (React + Tailwind)
 - [ ] gRPC endpoint for lower latency
 - [ ] Support for local models (Ollama, vLLM)
 
-### 🔮 Planned
+### ðŸ”® Planned
 - [ ] Prompt templating with variables
 - [ ] A/B testing framework
 - [ ] Python SDK & TypeScript SDK
@@ -394,27 +380,27 @@ curl -X POST http://localhost:8000/admin/chaos/off \
 
 ---
 
-## 🤝 Contributing
+## ðŸ¤ Contributing
 
 We welcome contributions! Here's how to get started:
 
-1. **Pick an issue** — Look for `good first issue` or `help wanted`
-2. **Discuss** — Comment on the issue or join our Discord
-3. **Fork & branch** — `git checkout -b feature/amazing-feature`
-4. **Code** — Follow our style guide and add tests
-5. **PR** — Submit a pull request with a clear description
+1. **Pick an issue** â€” Look for `good first issue` or `help wanted`
+2. **Discuss** â€” Comment on the issue or join our Discord
+3. **Fork & branch** â€” `git checkout -b feature/amazing-feature`
+4. **Code** â€” Follow our style guide and add tests
+5. **PR** â€” Submit a pull request with a clear description
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
-## 📄 License
+## ðŸ“„ License
 
-MIT © 2024 – See [LICENSE](LICENSE) for details.
+MIT Â© 2024 â€“ See [LICENSE](LICENSE) for details.
 
 ---
 
-## ⭐ Star History
+## â­ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=ammmanism/cost-aware-llm&type=Date)](https://star-history.com/#ammmanism/cost-aware-llm&Date)
 
@@ -422,15 +408,11 @@ MIT © 2024 – See [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**Built with ❤️ by developers who got tired of burning cash on LLM APIs.**
+**Built with â¤ï¸ by developers who got tired of burning cash on LLM APIs.**
 
-**[Star this repo](https://github.com/ammmanism/cost-aware-llm)** • **[Report Bug](https://github.com/ammmanism/cost-aware-llm/issues)** • **[Request Feature](https://github.com/ammmanism/cost-aware-llm/issues)**
+**[Star this repo](https://github.com/ammmanism/cost-aware-llm)** â€¢ **[Report Bug](https://github.com/ammmanism/cost-aware-llm/issues)** â€¢ **[Request Feature](https://github.com/ammmanism/cost-aware-llm/issues)**
 
-<<<<<<< HEAD
 </div>
-=======
-</div>
->>>>>>> 1e59a15 (docs/refactor: optimize README.md with enhanced docstrings and type safety)
 
 # Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
 
