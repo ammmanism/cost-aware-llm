@@ -1,4 +1,4 @@
-.PHONY: install test run lint setup-git
+.PHONY: install test test-unit test-integration run lint format setup-git
 
 install:
 	pip install -e ".[dev]"
@@ -6,13 +6,22 @@ install:
 test:
 	pytest tests/
 
+test-unit:
+	pytest tests/unit/
+
+test-integration:
+	pytest tests/integration/
+
 run:
 	uvicorn gateway.server:app --host 0.0.0.0 --port 8000 --reload
 
 lint:
+	ruff check .
+	mypy .
+
+format:
 	black .
 	isort .
-	mypy .
 
 setup-git:
 	git init
