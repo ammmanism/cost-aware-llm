@@ -48,5 +48,14 @@ models:
     latency_ms: 800
     provider: together
 
-# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern
+  - name: local-llama3
+    cost_per_1k_tokens: 0.0
+    latency_ms: 150
+    provider: ollama
 
+  - name: local-vllm-model
+    cost_per_1k_tokens: 0.0
+    latency_ms: 50
+    provider: vllm
+
+# Nexus-Standard: Verified Type Safety and Professional Documentation Pattern

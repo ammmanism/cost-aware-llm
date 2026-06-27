@@ -4,6 +4,7 @@ from providers.gemini import GeminiProvider
 from providers.together import TogetherProvider
 from providers.groq import GroqProvider
 from providers.vllm import VLLMProvider
+from providers.ollama import OllamaProvider
 from typing import Dict, Any, Optional, Set
 
 class ProviderFactory:
@@ -19,7 +20,8 @@ class ProviderFactory:
         "google": GeminiProvider(),
         "together": TogetherProvider(),
         "groq": GroqProvider(),
-        "vllm": VLLMProvider()
+        "vllm": VLLMProvider(),
+        "ollama": OllamaProvider()
     }
     
     _disabled_providers: Set[str] = set()
@@ -43,18 +45,19 @@ class ProviderFactory:
     def get_provider_for_model(cls, model_name: str) -> Optional[Any]:
         """Identify the correct provider based on the requested model name."""
         provider_key = None
-        if "gpt" in model_name:
+        if "ollama" in model_name:
+            provider_key = "ollama"
+        elif "gpt" in model_name:
             provider_key = "openai"
         elif "claude" in model_name:
             provider_key = "anthropic"
         elif "gemini" in model_name:
             provider_key = "google"
-        elif "llama" in model_name or "mixtral" in model_name:
-            provider_key = "together"
         elif "vllm" in model_name or "local" in model_name:
             provider_key = "vllm"
+        elif "llama" in model_name or "mixtral" in model_name:
+            provider_key = "together"
             
         if provider_key and provider_key not in cls._disabled_providers:
             return cls._providers.get(provider_key)
         return None
-
