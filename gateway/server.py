@@ -35,6 +35,8 @@ from routers.adaptive import AdaptiveRouter
 from routers.cost_aware import CostAwareRouter
 from routers.fallback import FallbackRouter
 from routers.latency_aware import LatencyAwareRouter
+from templates.manager import template_manager
+from typing import Optional, Dict, Any
 
 # Security
 from security.auth import APIKeyAuthMiddleware
@@ -101,7 +103,9 @@ fallback_router_logic = FallbackRouter()
 
 
 class GenerateRequest(BaseModel):
-    prompt: str
+    prompt: Optional[str] = None
+    template_id: Optional[str] = None
+    variables: Optional[Dict[str, Any]] = None
     tenant_id: Optional[str] = "default"
     use_cache: Optional[bool] = True
     prefer_latency: Optional[bool] = False
@@ -159,12 +163,23 @@ async def generate(request: GenerateRequest, req: Request):
     if hasattr(req.state, "tenant_id"):
         request.tenant_id = req.state.tenant_id
 
+    # Templating resolution
+    prompt_text = request.prompt
+    if request.template_id:
+        try:
+            prompt_text = template_manager.render(request.template_id, request.variables or {})
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+            
+    if not prompt_text:
+        raise HTTPException(status_code=400, detail="Either 'prompt' or 'template_id' must be provided")
+
     # Validation & Sanitization
-    is_valid, error_msg = SentinelFirewall.validate(request.prompt, request.tenant_id)
+    is_valid, error_msg = SentinelFirewall.validate(prompt_text, request.tenant_id)
     if not is_valid:
         failure_counter.inc()
         raise HTTPException(status_code=400, detail=error_msg)
-    prompt_sanitized = SentinelFirewall.sanitize(request.prompt)
+    prompt_sanitized = SentinelFirewall.sanitize(prompt_text)
 
     # Rate limiting
     allowed, _ = await rate_limiter.is_allowed(request.tenant_id)
@@ -288,8 +303,19 @@ async def generate_stream(request: GenerateRequest, req: Request):
     start_time = time.perf_counter()
     request_counter.inc()
 
+    # Templating resolution
+    prompt_text = request.prompt
+    if request.template_id:
+        try:
+            prompt_text = template_manager.render(request.template_id, request.variables or {})
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+            
+    if not prompt_text:
+        raise HTTPException(status_code=400, detail="Either 'prompt' or 'template_id' must be provided")
+
     # Reuse validation logic
-    is_valid, error_msg = SentinelFirewall.validate(request.prompt, request.tenant_id)
+    is_valid, error_msg = SentinelFirewall.validate(prompt_text, request.tenant_id)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
 
@@ -297,14 +323,14 @@ async def generate_stream(request: GenerateRequest, req: Request):
     if request.model:
         models = [request.model]
     else:
-        models = await adaptive_router.select_models({"prompt": request.prompt})
+        models = await adaptive_router.select_models({"prompt": prompt_text})
 
     if not models:
         failure_counter.inc()
         raise HTTPException(status_code=503, detail="No models available for stream")
 
     m_name = models[0]
-    estimated_cost = cost_tracker.estimate_text_cost(m_name, request.prompt)
+    estimated_cost = cost_tracker.estimate_text_cost(m_name, prompt_text)
     if not await budget_enforcer.check_budget(request.tenant_id, estimated_cost):
         failure_counter.inc()
         remaining = await budget_enforcer.get_remaining_budget(request.tenant_id)
@@ -320,13 +346,13 @@ async def generate_stream(request: GenerateRequest, req: Request):
     async def stream_wrapper():
         full_output = []
         try:
-            async for chunk in provider.stream_generate(prompt=request.prompt, model=m_name):
+            async for chunk in provider.stream_generate(prompt=prompt_text, model=m_name):
                 full_output.append(chunk)
                 yield f"data: {json.dumps({'chunk': chunk, 'model': m_name})}\n\n"
 
             # Post-stream telemetry
             latency = (time.perf_counter() - start_time) * 1000
-            tokens = len(request.prompt.split()) + len(full_output)
+            tokens = len(prompt_text.split()) + len(full_output)
             cost = cost_tracker.calculate_cost(m_name, tokens)
 
             await adaptive_router.record_result(m_name, True, latency, cost)
@@ -340,6 +366,20 @@ async def generate_stream(request: GenerateRequest, req: Request):
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(stream_wrapper(), media_type="text/event-stream")
+
+class TemplateRequest(BaseModel):
+    content: str
+
+@app.post("/admin/templates/{template_id}")
+async def create_template(template_id: str, request: TemplateRequest):
+    """Admin endpoint to create or update a prompt template."""
+    template_manager.add_template(template_id, request.content)
+    return {"status": "success", "template_id": template_id}
+
+@app.get("/admin/templates")
+async def list_templates():
+    """Admin endpoint to list all available templates."""
+    return {"templates": list(template_manager._templates.keys())}
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
