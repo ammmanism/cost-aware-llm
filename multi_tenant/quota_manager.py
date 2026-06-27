@@ -1,5 +1,8 @@
-from typing import Dict
+import asyncio
 import time
+from typing import Dict, Any
+
+from observability.webhooks import webhook_manager
 
 class QuotaManager:
     """
@@ -19,7 +22,16 @@ class QuotaManager:
         """
         await self._reset_if_needed(tenant_id)
         quota = self._quotas.get(tenant_id, {"tokens_used": 0, "limit": self.default_limit})
-        return (quota["tokens_used"] + tokens) <= quota["limit"]
+        allowed = (quota["tokens_used"] + tokens) <= quota["limit"]
+        
+        if not allowed:
+            # Fire webhook asynchronously
+            asyncio.create_task(webhook_manager.fire_event(
+                "quota_exceeded", 
+                {"tenant_id": tenant_id, "limit": quota["limit"], "attempted": tokens}
+            ))
+            
+        return allowed
 
     async def consume(self, tenant_id: str, tokens: int) -> None:
         """
