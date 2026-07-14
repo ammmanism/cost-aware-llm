@@ -211,3 +211,13 @@ git_log.txt
 # Local environment variables
 .env.local
 .env.*.local
+__pycache__/
+*.pyc
+venv/
+.env
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.log
+contribution_audit.log
+git_log.txt
